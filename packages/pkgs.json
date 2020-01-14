@@ -1,0 +1,7 @@
+[
+ {
+  "path": "/packages/peripherals/kendryte-sdk", 
+  "ver": "latest", 
+  "name": "KENDRYTE_SDK"
+ }
+]

@@ -1,0 +1,33 @@
+{
+    "configurations": [
+        {
+            "intelliSenseMode": "clang-x64",
+            "name": "Win32",
+            "cppStandard": "c++11",
+            "cStandard": "c99",
+            "compilerPath": "/home/hehe/xPacks/riscv-none-embed-gcc/8.3.0-1.1/bin/riscv-none-embed-gcc",
+            "includePath": [
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/applications",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/driver",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/kendryte-sdk-latest/kendryte-standalone-sdk/lib/bsp/include",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/kendryte-sdk-latest/kendryte-standalone-sdk/lib/drivers/include",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/kendryte-sdk-latest/kendryte-standalone-sdk/lib/utils/include",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/rt-thread/components/dfs/filesystems/devfs",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/rt-thread/components/dfs/include",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/rt-thread/components/drivers/include",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/rt-thread/components/finsh",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/rt-thread/components/libc/compilers/newlib",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/rt-thread/components/utilities/ulog",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/rt-thread/include",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/rt-thread/libcpu/risc-v/common",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/rt-thread/libcpu/risc-v/k210"
+            ],
+            "defines": [
+                "HAVE_CCONFIG_H",
+                "RT_USING_NEWLIB"
+            ]
+        }
+    ],
+    "version": 4
+}
