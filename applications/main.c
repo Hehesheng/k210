@@ -8,68 +8,53 @@
  * 2018/09/30     Bernard      The first version
  */
 
-#include <rtthread.h>
-#include <rtdevice.h>
-#include <stdio.h>
 #include <msh.h>
+#include <rtdevice.h>
+#include <rtthread.h>
+#include <stdio.h>
+
+#include <fpioa.h>
+#include <gpio.h>
+#include <gpiohs.h>
+
+#define R_LED (6)
+#define G_LED (5)
+#define B_LED (4)
 
 int main(void)
 {
-    rt_kprintf("Hello, world\n");
+    gpio_init();
 
-    rt_thread_delay(RT_TICK_PER_SECOND * 5);
-
-    while (1)
-    {
-        // msh_exec("list_sem", sizeof("list_sem"));
-        rt_thread_delay(RT_TICK_PER_SECOND * 3);
-    }
-    
-
-    return 0;
-}
-
-static void thread(void* parm)
-{
-    rt_device_t serial, lcd;
-    char ch = 'A';
-    int count, loop = 0, ret;
-
-    serial = rt_device_find("uarths");
-    lcd = rt_device_find("lcd");
-    rt_device_init(lcd);
-    // ret = rt_device_control(serial, RT_DEVICE_CTRL_SET_INT, RT_NULL);
+    gpio_set_drive_mode(R_LED, GPIO_DM_OUTPUT);
+    fpioa_set_function(14, FUNC_GPIO0 + R_LED);
+    gpio_set_drive_mode(G_LED, GPIO_DM_OUTPUT);
+    fpioa_set_function(13, FUNC_GPIO0 + G_LED);
+    gpio_set_drive_mode(B_LED, GPIO_DM_OUTPUT);
+    fpioa_set_function(12, FUNC_GPIO0 + B_LED);
 
     while (1)
     {
-        // count = rt_device_read(serial, 0, &ch, 1);
-        // if (count != 0)
-        // {
-        //     rt_kprintf("%c", ch);
-        // }
-        rt_thread_delay(10);
-        loop++;
-        if (loop % 300 == 0)
+        for (int i = 0; i < 8; i++)
         {
-            rt_kprintf("loop over:%d, ret:%d, A:%c\n", loop, ret, ch);
+            for (int j = 0; j < 3; j++)
+            {
+                gpio_set_pin(R_LED - j, (i & (1 << j)) >> j);
+            }
+            rt_thread_delay(RT_TICK_PER_SECOND / 2);
         }
     }
-    
-}
-
-static int test_init(void)
-{
-    rt_thread_t tid;
-
-    tid = (rt_thread_t)rt_object_find("tshell", RT_Object_Class_Thread);
-    rt_thread_control(tid, RT_THREAD_CTRL_BIND_CPU, (void*)0);
-
-    tid = rt_thread_create("test", thread, RT_NULL, 4096, 5, 100);
-    if (tid != RT_NULL)
-    {
-        rt_thread_startup(tid);
-    }
 
     return 0;
 }
-// INIT_APP_EXPORT(test_init);
+
+static void get_pin_config(int argc, char** argv)
+{
+    fpioa_io_config_t config;
+
+    for (int i = 0; i < FPIOA_NUM_IO; i++)
+    {
+        fpioa_get_io(i, &config);
+        rt_kprintf("pin: %2d, fun: %3d\n", i, config.ch_sel);
+    }
+}
+MSH_CMD_EXPORT(get_pin_config, get pin config);

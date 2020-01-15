@@ -2,14 +2,15 @@
     "folders": [
         {
             "path": "./"
-        },
-        {
-            "path": "C:/Users/hhslz/AppData/Local/Packages/CanonicalGroupLimited.UbuntuonWindows_79rhkp1fndgsc/LocalState/rootfs/home/hehe/MaixPy"
         }
     ],
     "settings": {
         "files.associations": {
-            "plic.h": "c"
+            "plic.h": "c",
+            "fpioa.h": "c",
+            "sysctl.h": "c",
+            "drv_io_config.h": "c",
+            "spi.h": "c"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
     }
