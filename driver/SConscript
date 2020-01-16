@@ -9,7 +9,6 @@ heap.c
 drv_uart.c
 drv_io_config.c
 drv_interrupt.c
-drv_tft.c
 ''')
 CPPPATH = [cwd]
 

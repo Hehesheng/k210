@@ -58,3 +58,15 @@ static void get_pin_config(int argc, char** argv)
     }
 }
 MSH_CMD_EXPORT(get_pin_config, get pin config);
+
+static void try_tft(int argc, char** argv)
+{
+    rt_device_t tft;
+
+    tft = rt_device_find("tft");
+    if (tft)
+    {
+        rt_device_init(tft);
+    }
+}
+MSH_CMD_EXPORT(try_tft, tft test);

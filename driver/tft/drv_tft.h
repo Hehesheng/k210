@@ -1,7 +1,5 @@
-#include <fpioa.h>
-#include <gpiohs.h>
-#include <rtthread.h>
-#include <spi.h>
+#ifndef DRV_TFT_H__
+#define DRV_TFT_H__
 
 /* clang-format off */
 #define NO_OPERATION            0x00
@@ -81,103 +79,45 @@
 #define DIGITAL_GAMMA_CTL2      0xE3
 #define INTERFACE_CTL           0xF6
 
-struct tft_hw
+#define LCD_SPI_SLAVE_SELECT 3
+
+#define LCD_SWAP_COLOR_BYTES 1
+
+/* clang-format off */
+#define BLACK       0x0000
+#define NAVY        0x0F00
+#define DARKGREEN   0xE003
+#define DARKCYAN    0xEF03
+#define MAROON      0x0078
+#define PURPLE      0x0F78
+#define OLIVE       0xE07B
+#define LIGHTGREY   0x18C6
+#define DARKGREY    0xEF7B
+#define BLUE        0x1F00
+#define GREEN       0xE007
+#define CYAN        0xFF07
+#define RED         0x00F8
+#define MAGENTA     0x1FF8
+#define YELLOW      0xE0FF
+#define WHITE       0xFFFF
+#define ORANGE      0x20FD
+#define GREENYELLOW 0xE5AF
+#define PINK        0x1FF8
+#define USER_COLOR  0x55AA
+/* clang-format on */
+
+typedef enum 
 {
-    spi_device_num_t spi_channel;
-    dmac_channel_number_t dma_channel;
-    int cs;
-    int dc;
-    int clk;
-    int rst;
-};
+    DIR_XY_RLUD = 0x00,
+    DIR_YX_RLUD = 0x20,
+    DIR_XY_LRUD = 0x40,
+    DIR_YX_LRUD = 0x60,
+    DIR_XY_RLDU = 0x80,
+    DIR_YX_RLDU = 0xA0,
+    DIR_XY_LRDU = 0xC0,
+    DIR_YX_LRDU = 0xE0,
+    DIR_XY_MASK = 0x20,
+    DIR_MASK = 0xE0,
+} tft_dir_t;
 
-struct k210_tft
-{
-    struct rt_device parent;
-    struct tft_hw hw;
-    struct rt_device_graphic_info info;
-};
-
-static struct k210_tft tft;
-
-static void init_dcx(void)
-{
-    gpiohs_set_drive_mode(tft.hw.dc, GPIO_DM_OUTPUT);
-    gpiohs_set_pin(tft.hw.dc, GPIO_PV_HIGH);
-}
-
-static void set_dcx_control(void)
-{
-    gpiohs_set_pin(tft.hw.dc, GPIO_PV_LOW);
-}
-
-static void set_dcx_data(void)
-{
-    gpiohs_set_pin(tft.hw.dc, GPIO_PV_HIGH);
-}
-
-static void init_rst(void)
-{
-    gpiohs_set_drive_mode(tft.hw.rst, GPIO_DM_OUTPUT);
-    gpiohs_set_pin(tft.hw.rst, GPIO_PV_HIGH);
-}
-
-static void set_rst(uint8_t val)
-{
-    gpiohs_set_pin(tft.hw.rst, val);
-}
-
-void tft_set_clk_freq(uint32_t freq)
-{
-    spi_set_clk_rate(tft.hw.spi_channel, freq);
-}
-
-rt_err_t tft_hw_init(rt_device_t dev)
-{    
-    init_dcx();
-    init_rst();
-
-    spi_init(tft.hw.spi_channel, SPI_WORK_MODE_0, SPI_FF_OCTAL, 8, 0);
-    
-    tft_set_clk_freq(15000000);
-    rt_thread_mdelay(50);
-    set_rst(1);
-    rt_thread_mdelay(50);
-
-    return RT_EOK;
-}
-
-int rt_hw_tft_init(void)
-{
-    rt_err_t ret;
-
-    tft.parent.type    = RT_Device_Class_Graphic;
-    tft.parent.init    = tft_hw_init;
-    tft.parent.open    = RT_NULL;
-    tft.parent.close   = RT_NULL;
-    tft.parent.read    = RT_NULL;
-    tft.parent.write   = RT_NULL;
-    tft.parent.control = RT_NULL;
-
-    tft.info.bits_per_pixel = 16;
-    tft.info.pixel_format   = RTGRAPHIC_PIXEL_FORMAT_RGB565;
-    tft.info.width          = 320;
-    tft.info.height         = 240;
-    tft.info.framebuffer    = rt_malloc(tft.info.width * tft.info.height * tft.info.bits_per_pixel / 8);
-
-    tft.parent.user_data = (void *)&tft.info;
-
-    tft.hw = (struct tft_hw){
-        .spi_channel = 0,
-        .dma_channel = DMAC_CHANNEL1,
-        .cs = 36,
-        .dc = 38,
-        .clk = 39,
-        .rst = 37,
-    };
-
-    ret = rt_device_register(&tft.parent, "tft", RT_DEVICE_FLAG_RDWR);
-
-    return ret;
-}
-INIT_DEVICE_EXPORT(rt_hw_tft_init);
+#endif
