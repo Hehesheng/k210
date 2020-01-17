@@ -10,7 +10,9 @@
             "fpioa.h": "c",
             "sysctl.h": "c",
             "drv_io_config.h": "c",
-            "spi.h": "c"
+            "spi.h": "c",
+            "*.tcc": "c",
+            "ostream": "c"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
     }
