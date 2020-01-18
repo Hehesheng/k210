@@ -33,7 +33,7 @@ Kendryte中文含义为勘智，而勘智取自勘物探智。这颗芯片主要
 
 编译K210，需要有RT-Thread的代码，因为K210的sdk是以软件包方式，所以需要在bsp/k210下做软件包更新。Windows下推进使用[env工具][1]，然后在console下进入bsp/k210目录中，运行：
 
-    cd bsp/k210
+    cd k210
     pkgs --update
 
 如果在Linux平台下，可以先执行
@@ -44,7 +44,7 @@ Kendryte中文含义为勘智，而勘智取自勘物探智。这颗芯片主要
 
     source ~/.env/env.sh
     
-    cd bsp/k210
+    cd k210
     pkgs --update
 
 更新完软件包后，设置risc-v的工具链，然后执行scons编译：
@@ -75,10 +75,12 @@ Kendryte中文含义为勘智，而勘智取自勘物探智。这颗芯片主要
 | 驱动 | 支持情况  |  备注  |
 | ------ | ----  | :------:  |
 | UART | 支持 | 高速UART，用于shell |
+| PIN | 支持 |  |
+| TFT | 支持 | 目前尚未完善，仅初始化成功 |
 
 ## 5. 联系人信息
 
-维护人：[bernard](https://github.com/BernardXiong)
+维护人：[bernard](https://github.com/BernardXiong)、[Hehesheng](https://github.com/Hehesheng)
 
 ## 6. 注意事项
 

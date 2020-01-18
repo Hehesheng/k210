@@ -3,5 +3,10 @@
   "path": "/packages/peripherals/kendryte-sdk", 
   "ver": "latest", 
   "name": "KENDRYTE_SDK"
+ }, 
+ {
+  "path": "/packages/misc/MultiButton", 
+  "ver": "v1.0.2", 
+  "name": "MULTIBUTTON"
  }
 ]

@@ -173,6 +173,11 @@
 
 /* miscellaneous packages */
 
+#define PKG_USING_MULTIBUTTON
+#define PKG_USING_MULTIBUTTON_V102
+
+/* MultiButton Options */
+
 
 /* samples: kernel and components samples */
 

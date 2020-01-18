@@ -40,3 +40,6 @@ RTE/
 settings/
 *.uvguix*
 cconfig.h
+rtthread.asm
+rtthread.map
+rtthreadelf.asm
