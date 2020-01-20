@@ -207,6 +207,6 @@ void tft_clear(uint16_t color)
 {
     uint32_t data = ((uint32_t)color << 16) | (uint32_t)color;
 
-    tft_set_area(0, 0, tft.info.width, tft.info.height);
+    tft_set_area(0, 0, tft.info.width - 1, tft.info.height - 1);
     tft_fill_data(&data, tft.info.width * tft.info.height /2);
 }

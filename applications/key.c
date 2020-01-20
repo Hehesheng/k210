@@ -16,11 +16,7 @@
 #define KEY1_PIN (1)
 #define KEY2_PIN (2)
 
-static uint8_t get_key0_value(void) { return gpio_get_pin(KEY0_PIN); }
-
-static uint8_t get_key1_value(void) { return gpio_get_pin(KEY1_PIN); }
-
-static uint8_t get_key2_value(void) { return gpio_get_pin(KEY2_PIN); }
+static uint8_t get_pin_value(button* btn) { return gpio_get_pin((size_t)btn->user); }
 
 static void start_tft(void* param) { msh_exec("try_tft", strlen("try_tft")); }
 
@@ -34,9 +30,12 @@ static void key_thread(void* param)
 {
     button* key[3] = {0};
 
-    key[0] = button_create("DOWN", get_key0_value, 0);
-    key[1] = button_create("MEDIUM", get_key1_value, 0);
-    key[2] = button_create("UP", get_key2_value, 0);
+    key[0] = button_create("DOWN", get_pin_value, 0);
+    key[0]->user = (void*)KEY0_PIN;
+    key[1] = button_create("MEDIUM", get_pin_value, 0);
+    key[1]->user = (void*)KEY1_PIN;
+    key[2] = button_create("UP", get_pin_value, 0);
+    key[2]->user = (void*)KEY2_PIN;
 
     for (int i = 0; i < 3; i++)
     {
