@@ -1,4 +1,5 @@
 #include <rtdevice.h>
+#include <rthw.h>
 #include <rtthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +8,9 @@
 #include <gpio.h>
 #include <gpiohs.h>
 #include "drv_tft.h"
+
+#include "plic.h"
+#include "uart.h"
 
 #define LOG_TAG "app.cmd"
 #include <ulog.h>
@@ -360,3 +364,89 @@ static void try_tft(int argc, char** argv)
     rt_thread_startup(tid);
 }
 MSH_CMD_EXPORT(try_tft, tft test);
+
+struct rt_ringbuffer* rx_buf;
+
+int test_uart_irq_callback(void* param)
+{
+    char ch;
+    rt_sem_t cnt = (rt_sem_t)param;
+
+    uart_receive_data(UART_DEVICE_1, &ch, 1);
+    rt_ringbuffer_putchar(rx_buf, ch);
+    rt_sem_release(cnt);
+
+    return 0;
+}
+
+static void uart_thread(void* param)
+{
+    rt_sem_t cnt = (rt_sem_t)param;
+    char ch;
+    int state = 0;
+
+    while (1)
+    {
+        rt_sem_take(cnt, RT_WAITING_FOREVER);
+        rt_ringbuffer_getchar(rx_buf, &ch);
+        if (state == 0)
+        {
+            state = 1;
+            rt_kprintf("ESP Recv:[\n");
+            rt_kprintf("%c, 0x%X\n", ch, ch);
+        }
+        else if (state == 1)
+        {
+            rt_kprintf("%c, 0x%X\n", ch, ch);
+            if (ch == '\n')
+            {
+                state = 0;
+                rt_kprintf("]\n");
+            }
+        }
+    }
+}
+
+static void esp_send(int argc, char** argv)
+{
+    if (argc > 1)
+    {
+        uart_send_data(UART_DEVICE_1, argv[1], rt_strlen(argv[1]));
+        uart_send_data(UART_DEVICE_1, "\r\n", 2);
+        // uart_send_data(UART_DEVICE_1, "\r\n", 2);
+    }
+}
+MSH_CMD_EXPORT(esp_send, at send);
+
+static int uart_test_init(void)
+{
+    rt_thread_t tid;
+    rt_sem_t rx_cnt;
+
+    rx_buf = rt_ringbuffer_create(64);
+    rx_cnt = rt_sem_create("uart_cnt", 0, RT_IPC_FLAG_FIFO);
+
+    fpioa_set_function(6, FUNC_UART1_RX);
+    fpioa_set_function(7, FUNC_UART1_TX);
+    fpioa_set_function(8, FUNC_GPIOHS0);
+    gpiohs_set_drive_mode(0, GPIO_DM_OUTPUT);
+    gpiohs_set_pin(0, PIN_HIGH);
+
+    uart_init(UART_DEVICE_1);
+    rt_thread_delay(1);
+    uart_configure(UART_DEVICE_1, 115200, UART_BITWIDTH_8BIT, UART_STOP_1, UART_PARITY_NONE);
+    uart_set_receive_trigger(UART_DEVICE_1, UART_RECEIVE_FIFO_1);
+
+    uart_irq_register(UART_DEVICE_1, UART_RECEIVE, test_uart_irq_callback, rx_cnt, 1);
+
+    tid = rt_thread_create("uart", uart_thread, rx_cnt, 4096, 10, 20);
+    if (tid == NULL)
+    {
+        log_e("test bad.");
+        return -1;
+    }
+    rt_thread_startup(tid);
+
+    return 0;
+}
+INIT_APP_EXPORT(uart_test_init);
