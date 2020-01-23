@@ -371,11 +371,17 @@ int test_uart_irq_callback(void* param)
 {
     char ch;
     rt_sem_t cnt = (rt_sem_t)param;
+    uint8_t id   = current_coreid();
+    rt_interrupt_enter();
 
-    uart_receive_data(UART_DEVICE_1, &ch, 1);
-    rt_ringbuffer_putchar(rx_buf, ch);
-    rt_sem_release(cnt);
+    while (uart_receive_data(UART_DEVICE_2, &ch, 1))
+    {
+        rt_ringbuffer_putchar(rx_buf, ch);
+        rt_ringbuffer_putchar(rx_buf, id);
+        rt_sem_release(cnt);
+    }
 
+    rt_interrupt_leave();
     return 0;
 }
 
@@ -383,27 +389,21 @@ static void uart_thread(void* param)
 {
     rt_sem_t cnt = (rt_sem_t)param;
     char ch;
+    uint8_t id;
     int state = 0;
 
     while (1)
     {
         rt_sem_take(cnt, RT_WAITING_FOREVER);
         rt_ringbuffer_getchar(rx_buf, &ch);
-        if (state == 0)
+        rt_ringbuffer_getchar(rx_buf, &id);
+
+        rt_kprintf("ID: %d%d, Hex: 0x%X, Char: ", id, current_coreid(), ch);
+        if (ch >= 32 && ch <= 126)
         {
-            state = 1;
-            rt_kprintf("ESP Recv:[\n");
-            rt_kprintf("%c, 0x%X\n", ch, ch);
+            rt_kprintf("%c", ch);
         }
-        else if (state == 1)
-        {
-            rt_kprintf("%c, 0x%X\n", ch, ch);
-            if (ch == '\n')
-            {
-                state = 0;
-                rt_kprintf("]\n");
-            }
-        }
+        rt_kprintf("\n");
     }
 }
 
@@ -411,8 +411,8 @@ static void esp_send(int argc, char** argv)
 {
     if (argc > 1)
     {
-        uart_send_data(UART_DEVICE_1, argv[1], rt_strlen(argv[1]));
-        uart_send_data(UART_DEVICE_1, "\r\n", 2);
+        uart_send_data(UART_DEVICE_2, argv[1], rt_strlen(argv[1]));
+        uart_send_data(UART_DEVICE_2, "\r\n", 2);
         // uart_send_data(UART_DEVICE_1, "\r\n", 2);
     }
 }
@@ -426,18 +426,17 @@ static int uart_test_init(void)
     rx_buf = rt_ringbuffer_create(64);
     rx_cnt = rt_sem_create("uart_cnt", 0, RT_IPC_FLAG_FIFO);
 
-    fpioa_set_function(6, FUNC_UART1_RX);
-    fpioa_set_function(7, FUNC_UART1_TX);
+    fpioa_set_function(6, FUNC_UART2_RX);
+    fpioa_set_function(7, FUNC_UART2_TX);
     fpioa_set_function(8, FUNC_GPIOHS0);
     gpiohs_set_drive_mode(0, GPIO_DM_OUTPUT);
     gpiohs_set_pin(0, PIN_HIGH);
 
-    uart_init(UART_DEVICE_1);
-    rt_thread_delay(1);
-    uart_configure(UART_DEVICE_1, 115200, UART_BITWIDTH_8BIT, UART_STOP_1, UART_PARITY_NONE);
-    uart_set_receive_trigger(UART_DEVICE_1, UART_RECEIVE_FIFO_1);
+    uart_init(UART_DEVICE_2);
+    uart_configure(UART_DEVICE_2, 115200, UART_BITWIDTH_8BIT, UART_STOP_1, UART_PARITY_NONE);
+    uart_set_receive_trigger(UART_DEVICE_2, UART_RECEIVE_FIFO_1);
 
-    uart_irq_register(UART_DEVICE_1, UART_RECEIVE, test_uart_irq_callback, rx_cnt, 1);
+    uart_irq_register(UART_DEVICE_2, UART_RECEIVE, test_uart_irq_callback, rx_cnt, 5);
 
     tid = rt_thread_create("uart", uart_thread, rx_cnt, 4096, 10, 20);
     if (tid == NULL)
@@ -445,6 +444,7 @@ static int uart_test_init(void)
         log_e("test bad.");
         return -1;
     }
+    // rt_thread_control(tid, RT_THREAD_CTRL_BIND_CPU, (void*)0);
     rt_thread_startup(tid);
 
     return 0;

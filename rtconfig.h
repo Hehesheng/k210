@@ -186,6 +186,8 @@
 
 #define BOARD_K210_EVB
 #define BSP_USING_UART_HS
+#define BSP_USING_UART1
+#define BSP_USING_UART2
 #define BSP_USING_UART3
 #define __STACKSIZE__ 4096
 
