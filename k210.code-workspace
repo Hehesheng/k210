@@ -12,7 +12,8 @@
             "drv_io_config.h": "c",
             "spi.h": "c",
             "*.tcc": "c",
-            "ostream": "c"
+            "ostream": "c",
+            "fstream": "c"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
     }

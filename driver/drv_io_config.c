@@ -85,11 +85,10 @@ int io_config_init(void)
 {
     int count = sizeof(io_config) / sizeof(io_config[0]);
     int i;
-
-    sysctl_set_power_mode(SYSCTL_POWER_BANK0, SYSCTL_POWER_V18);
-    sysctl_set_power_mode(SYSCTL_POWER_BANK1, SYSCTL_POWER_V18);
-    sysctl_set_power_mode(SYSCTL_POWER_BANK2, SYSCTL_POWER_V18);
     
+    sysctl_set_power_mode(SYSCTL_POWER_BANK6, SYSCTL_POWER_V18);
+    sysctl_set_power_mode(SYSCTL_POWER_BANK7, SYSCTL_POWER_V18);
+
     for(i = 0; i < count; i++)
     {
         fpioa_set_function(io_config[i].io_num, io_config[i].func);
