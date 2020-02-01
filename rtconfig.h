@@ -83,13 +83,14 @@
 /* Device Drivers */
 
 #define RT_USING_DEVICE_IPC
-#define RT_PIPE_BUFSZ 512
+#define RT_PIPE_BUFSZ 1024
 #define RT_USING_SYSTEM_WORKQUEUE
 #define RT_SYSTEM_WORKQUEUE_STACKSIZE 2048
 #define RT_SYSTEM_WORKQUEUE_PRIORITY 23
 #define RT_USING_SERIAL
 #define RT_SERIAL_RB_BUFSZ 64
 #define RT_USING_PIN
+#define RT_USING_RTC
 
 /* Using USB */
 
@@ -143,6 +144,8 @@
 
 /* IoT - internet of things */
 
+#define PKG_USING_CJSON
+#define PKG_USING_CJSON_V102
 
 /* Wi-Fi */
 
@@ -169,6 +172,8 @@
 
 /* system packages */
 
+#define PKG_USING_THREAD_POOL
+#define PKG_USING_THREAD_POOL_V401
 
 /* peripheral libraries and drivers */
 
@@ -178,19 +183,23 @@
 
 /* miscellaneous packages */
 
+#define PKG_USING_OPTPARSE
+#define PKG_USING_OPTPARSE_V100
 #define PKG_USING_MULTIBUTTON
 #define PKG_USING_MULTIBUTTON_V102
 
 /* MultiButton Options */
+
+#define PKG_USING_DSTR
+#define PKG_USING_DSTR_V010
+
+/* dstr Options */
 
 
 /* samples: kernel and components samples */
 
 #define BOARD_K210_EVB
 #define BSP_USING_UART_HS
-#define BSP_USING_UART1
-#define BSP_USING_UART2
-#define BSP_USING_UART3
 #define __STACKSIZE__ 4096
 
 #endif

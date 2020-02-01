@@ -1,3 +1,4 @@
+#include <msh.h>
 #include <rtdevice.h>
 #include <rthw.h>
 #include <rtthread.h>
@@ -8,9 +9,10 @@
 #include <gpio.h>
 #include <gpiohs.h>
 #include "drv_tft.h"
-
 #include "plic.h"
 #include "uart.h"
+
+#include "thread_pool.h"
 
 #define LOG_TAG "app.cmd"
 #include <ulog.h>
@@ -313,6 +315,7 @@ static void tft_thread(void* param)
     };
 
     tft_clear(0);
+    log_d("delay tick: %d", t);
 
     while (1)
     {
@@ -362,6 +365,7 @@ static void try_tft(int argc, char** argv)
     if (argc > 1) param = atoi(argv[1]);
     tid = rt_thread_create("tft", tft_thread, &param, 4096, 10, 50);
     rt_thread_startup(tid);
+    rt_thread_delay(3);
 }
 MSH_CMD_EXPORT(try_tft, tft test);
 
@@ -379,7 +383,7 @@ int test_uart_irq_callback(void* param)
     for (int i = 0; i < ret; i++)
     {
         rt_ringbuffer_putchar(rx_buf, ch[i]);
-        // rt_sem_release(cnt);
+        rt_sem_release(cnt);
     }
 
     rt_interrupt_leave();
@@ -393,6 +397,7 @@ static void uart_thread(void* param)
 
     while (1)
     {
+        rt_sem_take(cnt, RT_WAITING_FOREVER);
         if (rt_ringbuffer_getchar(rx_buf, &ch))
         {
             rt_kprintf("Hex: 0x%X, Char: ", ch);
@@ -402,7 +407,6 @@ static void uart_thread(void* param)
             }
             rt_kprintf("\n");
         }
-        rt_thread_delay(RT_TICK_PER_SECOND / 100);
     }
 }
 
@@ -415,7 +419,7 @@ static void esp_send(int argc, char** argv)
         // uart_send_data(UART_DEVICE_1, "\r\n", 2);
     }
 }
-// MSH_CMD_EXPORT(esp_send, at send);
+MSH_CMD_EXPORT(esp_send, at send);
 
 static int uart_test_init(void)
 {
@@ -433,7 +437,7 @@ static int uart_test_init(void)
 
     uart_init(UART_DEVICE_3);
     uart_configure(UART_DEVICE_3, 115200, UART_BITWIDTH_8BIT, UART_STOP_1, UART_PARITY_NONE);
-    uart_set_receive_trigger(UART_DEVICE_3, UART_RECEIVE_FIFO_1);
+    uart_set_receive_trigger(UART_DEVICE_3, UART_RECEIVE_FIFO_8);
 
     uart_irq_register(UART_DEVICE_3, UART_RECEIVE, test_uart_irq_callback, rx_cnt, 5);
 
@@ -448,35 +452,36 @@ static int uart_test_init(void)
 
     return 0;
 }
-// INIT_APP_EXPORT(uart_test_init);
+INIT_APP_EXPORT(uart_test_init);
 
-static void uart(int argc, char** argv)
+static void task(void* arg)
 {
-    rt_device_t dev;
-
-    if (argc > 1)
-    {
-        rt_thread_delay(10);
-        fpioa_set_function(4, FUNC_UART3_RX);
-        fpioa_set_function(5, FUNC_UART3_TX);
-
-        dev = rt_device_find("uart1");
-        if (dev == RT_NULL)
-        {
-            fpioa_set_function(4, FUNC_UARTHS_RX);
-            fpioa_set_function(5, FUNC_UARTHS_TX);
-            return;
-        }
-        rt_device_open(dev, RT_DEVICE_OFLAG_RDWR | RT_DEVICE_FLAG_INT_RX);
-        rt_console_set_device("uart1");
-        rt_kprintf("console change!\n");
-        rt_thread_delay(RT_TICK_PER_SECOND * 3);
-
-        fpioa_set_function(4, FUNC_UARTHS_RX);
-        fpioa_set_function(5, FUNC_UARTHS_TX);
-        dev = rt_device_find("uarths");
-        rt_device_open(dev, RT_DEVICE_OFLAG_RDWR | RT_DEVICE_FLAG_INT_RX);
-        rt_console_set_device("uarths");
-    }
+    LOG_I("The task on thread %.*s is running.", RT_NAME_MAX, rt_thread_self()->name);
+    rt_thread_delay(rt_tick_from_millisecond((uint32_t)arg));
+    LOG_I("The task on thread %.*s will finish.", RT_NAME_MAX, rt_thread_self()->name);
 }
-MSH_CMD_EXPORT(uart, UART CMD);
+
+static void thread_pool_sample(uint8_t argc, char** argv)
+{
+    thread_pool pool;
+
+    init_thread_pool(&pool, "sam", 3, 2048);
+    /* add 5 task to thread pool */
+    pool.add_task(&pool, task, (void*)(rand() % 5000));
+    pool.add_task(&pool, task, (void*)(rand() % 5000));
+    pool.add_task(&pool, task, (void*)(rand() % 5000));
+    pool.add_task(&pool, task, (void*)(rand() % 5000));
+    pool.add_task(&pool, task, (void*)(rand() % 5000));
+    pool.add_task(&pool, task, (void*)(rand() % 5000));
+    pool.add_task(&pool, task, (void*)(rand() % 5000));
+    pool.add_task(&pool, task, (void*)(rand() % 5000));
+    pool.add_task(&pool, task, (void*)(rand() % 5000));
+    /* wait 10S */
+    rt_thread_delay(rt_tick_from_millisecond(10 * 1000));
+    /* delete all task */
+    pool.del_all(&pool);
+    rt_thread_delay(RT_TICK_PER_SECOND);
+    /* destroy the thread pool */
+    pool.destroy(&pool);
+}
+MSH_CMD_EXPORT(thread_pool_sample, Run thread pool sample);
