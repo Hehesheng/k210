@@ -17,7 +17,8 @@
             "spi.h": "c",
             "*.tcc": "c",
             "ostream": "c",
-            "fstream": "c"
+            "fstream": "c",
+            "algorithm": "c"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
     }
