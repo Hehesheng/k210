@@ -22,17 +22,6 @@
 #define G_LED (5)
 #define B_LED (4)
 
-#define CPU_USAGE_CALC_TICK 100
-
-typedef struct cpu_usage
-{
-    rt_uint64_t total_count;
-    rt_uint64_t count;
-    rt_uint8_t cpu_usage_major;
-    rt_uint8_t cpu_usage_minor;
-} cpu_usage;
-static cpu_usage cpus[2] = {0};
-
 int main(void)
 {
     gpio_init();
@@ -58,66 +47,3 @@ int main(void)
 
     return 0;
 }
-
-static void cpu_usage_idle_hook()
-{
-    rt_tick_t tick;
-    rt_uint8_t core = current_coreid();
-
-    if (cpus[core].total_count == 0)
-    {
-        /* get total count */
-        rt_enter_critical();
-        tick = rt_tick_get();
-        while (rt_tick_get() - tick < CPU_USAGE_CALC_TICK)
-        {
-            cpus[core].total_count++;
-        }
-        rt_exit_critical();
-    }
-
-    cpus[core].count = 0;
-    /* get CPU usage */
-    tick = rt_tick_get();
-    while (rt_tick_get() - tick < CPU_USAGE_CALC_TICK)
-    {
-        cpus[core].count++;
-    }
-
-    /* calculate major and minor */
-    if (cpus[core].count < cpus[core].total_count)
-    {
-        cpus[core].count           = cpus[core].total_count - cpus[core].count;
-        cpus[core].cpu_usage_major = (cpus[core].count * 100) / cpus[core].total_count;
-        cpus[core].cpu_usage_minor = ((cpus[core].count * 100) % cpus[core].total_count) * 100 / cpus[core].total_count;
-    }
-    else
-    {
-        cpus[core].total_count = cpus[core].count;
-
-        /* no CPU usage */
-        cpus[core].cpu_usage_major = 0;
-        cpus[core].cpu_usage_minor = 0;
-    }
-}
-
-static void get_cpu_usage(void)
-{
-    rt_kprintf("cpu  usage     total\n");
-    rt_kprintf("---  ------  ---------\n");
-    for (int core = 0; core < 2; core++)
-    {
-        rt_kprintf(" %d   %02d.%02d%%  %8d\n", core, cpus[core].cpu_usage_major, cpus[core].cpu_usage_minor,
-                   cpus[core].total_count);
-    }
-}
-MSH_CMD_EXPORT(get_cpu_usage, get cpu usage);
-
-static int cpu_usage_init(void)
-{
-    /* set idle thread hook */
-    rt_thread_idle_sethook(cpu_usage_idle_hook);
-
-    return 0;
-}
-INIT_PREV_EXPORT(cpu_usage_init);

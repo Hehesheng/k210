@@ -622,7 +622,7 @@ struct rt_thread
     void        *lwp;
 #endif
 
-    rt_uint32_t user_data;                             /**< private user data beyond this thread */
+    void *user_data;                             /**< private user data beyond this thread */
 };
 typedef struct rt_thread *rt_thread_t;
 
