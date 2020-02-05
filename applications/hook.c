@@ -1,11 +1,11 @@
 #include <rtdevice.h>
+#include <rthw.h>
 #include <rtthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <fpioa.h>
-#include <gpio.h>
-#include <gpiohs.h>
+#include <sysctl.h>
+#include <timer.h>
 
 #define LOG_TAG "app.hook"
 #include <ulog.h>
@@ -24,19 +24,19 @@ typedef struct cpu_usage
 } cpu_usage;
 static cpu_usage cpus[2] = {0};
 
-typedef struct hook_info
+typedef struct thread_usage
 {
     rt_uint32_t magic;
-    rt_uint64_t enter_tick;
-    rt_uint64_t leave_tick;
-    rt_uint64_t count_tick;
-    rt_uint64_t cost_tick;
-} * hook_info_t;
+    rt_uint32_t enter_tick;
+    rt_uint32_t leave_tick;
+    rt_uint32_t count_tick;
+    rt_uint32_t cost_tick;
+} * thread_usage_t;
 
 static void cpu_usage_idle_hook(void)
 {
     rt_tick_t tick;
-    rt_uint8_t core = current_coreid();
+    rt_uint8_t core = rt_hw_cpu_id();
     volatile rt_uint32_t loop;
 
     if (cpus[core].total_count == 0)
@@ -83,7 +83,7 @@ static void cpu_usage_idle_hook(void)
 static void get_cpu_usage(void)
 {
     struct rt_object_information* info = rt_object_get_information(RT_Object_Class_Thread);
-    hook_info_t data;
+    thread_usage_t data;
     rt_thread_t tid;
     rt_list_t* node;
     rt_tick_t cost;
@@ -101,7 +101,7 @@ static void get_cpu_usage(void)
     for (node = info->object_list.next; node != &(info->object_list); node = node->next)
     {
         tid  = rt_list_entry(node, struct rt_thread, list);
-        data = (hook_info_t)tid->user_data;
+        data = (thread_usage_t)tid->user_data;
         if (data != RT_NULL && data->magic == HOOK_MAGIC_NUM)
         {
             rt_kprintf("%-*.*s %6d\n", RT_NAME_MAX, RT_NAME_MAX, tid->name, data->cost_tick);
@@ -125,11 +125,11 @@ INIT_PREV_EXPORT(cpu_usage_init);
 
 static void clean_up_call(rt_thread_t tid)
 {
-    hook_info_t info;
+    thread_usage_t info;
 
     if (tid != RT_NULL && tid->user_data != RT_NULL)
     {
-        info = (hook_info_t)tid->user_data;
+        info = (thread_usage_t)tid->user_data;
         if (info->magic == HOOK_MAGIC_NUM)
         {
             rt_free(info);
@@ -139,43 +139,49 @@ static void clean_up_call(rt_thread_t tid)
 
 static void schedule_hook(rt_thread_t from, rt_thread_t to)
 {
-    hook_info_t from_info, to_info;
+    thread_usage_t from_info, to_info;
     rt_tick_t tick;
 
     tick = rt_tick_get();
     /* check from data illegal */
-    from_info = (hook_info_t)from->user_data;
+    from_info = (thread_usage_t)from->user_data;
     if (from_info == RT_NULL && from->cleanup == RT_NULL)
     {
-        from_info = rt_malloc(sizeof(struct hook_info));
+        from_info = rt_malloc(sizeof(struct thread_usage));
         if (from_info == RT_NULL)
         {
             log_w("No memory");
         }
-        from_info->magic      = HOOK_MAGIC_NUM;
-        from_info->enter_tick = tick;
-        from->user_data       = from_info;
-        from->cleanup         = clean_up_call;
+        else
+        {
+            from_info->magic      = HOOK_MAGIC_NUM;
+            from_info->enter_tick = tick;
+            from->user_data       = from_info;
+            from->cleanup         = clean_up_call;
+        }
     }
     /* user data update */
     if (from_info->magic == HOOK_MAGIC_NUM)
     {
         from_info->leave_tick = tick;
-        from_info->count_tick += from_info->leave_tick - from_info->enter_tick + 1;
+        from_info->count_tick += from_info->leave_tick - from_info->enter_tick;
     }
 
     /* check to data illegal */
-    to_info = (hook_info_t)to->user_data;
+    to_info = (thread_usage_t)to->user_data;
     if (to_info == RT_NULL && to->cleanup == RT_NULL)
     {
-        to_info = rt_malloc(sizeof(struct hook_info));
+        to_info = rt_malloc(sizeof(struct thread_usage));
         if (to_info == RT_NULL)
         {
             log_w("No memory");
         }
-        to_info->magic = HOOK_MAGIC_NUM;
-        to->user_data  = to_info;
-        to->cleanup    = clean_up_call;
+        else
+        {
+            to_info->magic = HOOK_MAGIC_NUM;
+            to->user_data  = to_info;
+            to->cleanup    = clean_up_call;
+        }
     }
     /* user data update */
     if (to_info->magic == HOOK_MAGIC_NUM)
@@ -187,7 +193,7 @@ static void schedule_hook(rt_thread_t from, rt_thread_t to)
 static void update_per_second(void* parm)
 {
     struct rt_object_information* info = (struct rt_object_information*)parm;
-    hook_info_t data;
+    thread_usage_t data;
     rt_thread_t tid;
     rt_list_t* node;
 
@@ -196,7 +202,7 @@ static void update_per_second(void* parm)
         for (node = info->object_list.next; node != &(info->object_list); node = node->next)
         {
             tid  = rt_list_entry(node, struct rt_thread, list);
-            data = (hook_info_t)tid->user_data;
+            data = (thread_usage_t)tid->user_data;
             if (data != RT_NULL && data->magic == HOOK_MAGIC_NUM)
             {
                 data->cost_tick  = data->count_tick;
@@ -225,3 +231,29 @@ static int init_schedule_hook(void)
     return 0;
 }
 INIT_APP_EXPORT(init_schedule_hook);
+
+static int timer_irq(void* param) { return 0; }
+
+static int hw_timer_init(void)
+{
+    size_t value;
+
+    timer_init(TIMER_DEVICE_0);
+    timer_set_interval(TIMER_DEVICE_0, TIMER_CHANNEL_0, 1000000000);
+    timer_irq_register(TIMER_DEVICE_0, TIMER_CHANNEL_0, 0, 1, timer_irq, NULL);
+    timer_set_enable(TIMER_DEVICE_0, TIMER_CHANNEL_0, 1);
+
+    return 0;
+}
+INIT_APP_EXPORT(hw_timer_init);
+
+static void get_timer_value(void)
+{
+    uint32_t value;
+
+    value = timer[0]->channel[0].current_value;
+    rt_kprintf("value: %d\n", value);
+    value = timer[0]->channel[0].current_value;
+    rt_kprintf("value: %d\n", value);
+}
+MSH_CMD_EXPORT(get_timer_value, get timer 0 value);

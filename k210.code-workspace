@@ -14,7 +14,8 @@
             "*.tcc": "c",
             "ostream": "c",
             "fstream": "c",
-            "algorithm": "c"
+            "algorithm": "c",
+            "timer.h": "c"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
     }
