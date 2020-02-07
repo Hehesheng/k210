@@ -1,0 +1,32 @@
+[
+ {
+  "path": "/packages/iot/cJSON", 
+  "ver": "v1.0.2", 
+  "name": "CJSON"
+ }, 
+ {
+  "path": "/packages/system/thread_pool", 
+  "ver": "v4.0.1", 
+  "name": "THREAD_POOL"
+ }, 
+ {
+  "path": "/packages/peripherals/kendryte-sdk", 
+  "ver": "latest", 
+  "name": "KENDRYTE_SDK"
+ }, 
+ {
+  "path": "/packages/misc/optparse", 
+  "ver": "v1.0.0", 
+  "name": "OPTPARSE"
+ }, 
+ {
+  "path": "/packages/misc/MultiButton", 
+  "ver": "v1.0.2", 
+  "name": "MULTIBUTTON"
+ }, 
+ {
+  "path": "/packages/misc/dstr", 
+  "ver": "v0.1.0", 
+  "name": "DSTR"
+ }
+]

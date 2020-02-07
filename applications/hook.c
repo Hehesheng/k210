@@ -112,7 +112,7 @@ static void get_cpu_usage(void)
         }
     }
 }
-MSH_CMD_EXPORT(get_cpu_usage, get cpu usage);
+// MSH_CMD_EXPORT(get_cpu_usage, get cpu usage);
 
 static int cpu_usage_init(void)
 {
@@ -121,7 +121,7 @@ static int cpu_usage_init(void)
 
     return 0;
 }
-INIT_PREV_EXPORT(cpu_usage_init);
+// INIT_PREV_EXPORT(cpu_usage_init);
 
 static void clean_up_call(rt_thread_t tid)
 {
@@ -230,30 +230,4 @@ static int init_schedule_hook(void)
 
     return 0;
 }
-INIT_APP_EXPORT(init_schedule_hook);
-
-static int timer_irq(void* param) { return 0; }
-
-static int hw_timer_init(void)
-{
-    size_t value;
-
-    timer_init(TIMER_DEVICE_0);
-    timer_set_interval(TIMER_DEVICE_0, TIMER_CHANNEL_0, 1000000000);
-    timer_irq_register(TIMER_DEVICE_0, TIMER_CHANNEL_0, 0, 1, timer_irq, NULL);
-    timer_set_enable(TIMER_DEVICE_0, TIMER_CHANNEL_0, 1);
-
-    return 0;
-}
-INIT_APP_EXPORT(hw_timer_init);
-
-static void get_timer_value(void)
-{
-    uint32_t value;
-
-    value = timer[0]->channel[0].current_value;
-    rt_kprintf("value: %d\n", value);
-    value = timer[0]->channel[0].current_value;
-    rt_kprintf("value: %d\n", value);
-}
-MSH_CMD_EXPORT(get_timer_value, get timer 0 value);
+// INIT_APP_EXPORT(init_schedule_hook);

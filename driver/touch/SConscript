@@ -1,0 +1,14 @@
+from building import *
+
+cwd     = GetCurrentDir()
+src     = Split('''
+drv_touchscreen.c
+''')
+CPPPATH = [cwd + '/include']
+CPPPATH += [cwd + '/ns2009/include']
+
+src += Glob('ns2009/*.c') + Glob('ns2009/*.cpp')
+
+group = DefineGroup('touch', src, depend = [''], CPPPATH = CPPPATH)
+
+Return('group')

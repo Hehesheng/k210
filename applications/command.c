@@ -17,16 +17,6 @@
 #define LOG_TAG "app.cmd"
 #include <ulog.h>
 
-typedef union color_t {
-    struct
-    {
-        uint16_t b : 5;
-        uint16_t g : 6;
-        uint16_t r : 5;
-    };
-    uint16_t color;
-} color_t;
-
 const char pin_func_name[][15] = {
     "JTAG_TCLK     ", /*!< JTAG Test Clock */
     "JTAG_TDI      ", /*!< JTAG Test Data In */
@@ -302,157 +292,28 @@ static void get_pin_config(int argc, char** argv)
 }
 MSH_CMD_EXPORT(get_pin_config, get pin config);
 
-static void tft_thread(void* param)
+static void change_tft(int argc, char** argv)
 {
-    uint32_t t = *((uint32_t*)param);
-    int8_t r_d = 0, g_d = 0, b_d = 1;
-    rt_tick_t start, end;
-    double fps;
-    color_t color = {
-        .r = 0,
-        .g = 0,
-        .b = 1,
-    };
+    static uint32_t index = 0;
+    uint16_t color        = WHITE;
+    struct rt_device_graphic_info* info;
+    rt_device_t dev = rt_device_find("tft");
+    uint32_t* ptr;
+    uint32_t len = 1;
 
-    tft_clear(0);
-    log_d("delay tick: %d", t);
+    info = (struct rt_device_graphic_info*)dev->user_data;
+    ptr  = (uint32_t*)info->framebuffer;
 
-    while (1)
+    if (argc > 1) color = atoi(argv[1]);
+    if (argc > 2) len = atoi(argv[2]);
+
+    while (len--)
     {
-        start = rt_tick_get();
-        color.b += b_d;
-        color.g += g_d;
-        color.r += r_d;
-
-        if (color.b >= 31)
-        {
-            b_d = -1;
-            g_d = 2;
-            r_d = 0;
-        }
-        if (color.g >= 62)
-        {
-            b_d = 0;
-            g_d = -2;
-            r_d = 1;
-        }
-        if (color.r >= 31)
-        {
-            b_d = 1;
-            g_d = 0;
-            r_d = -1;
-        }
-
-        tft_clear(color.color);
-        rt_thread_mdelay(t);
-        end = rt_tick_get();
-        fps = 1000.0 / (end - start);
+        ptr[index++] = color;
+        if (index >= 240 * 320) index = 0;
     }
 }
-
-static void try_tft(int argc, char** argv)
-{
-    rt_device_t tft;
-    rt_thread_t tid;
-    uint32_t param = 100;
-
-    tft = rt_device_find("tft");
-    if (tft)
-    {
-        if (tft->flag & RT_DEVICE_FLAG_ACTIVATED) return;
-        rt_device_init(tft);
-    }
-    if (argc > 1) param = atoi(argv[1]);
-    tid = rt_thread_create("tft", tft_thread, &param, 4096, 10, 50);
-    rt_thread_startup(tid);
-    rt_thread_delay(3);
-}
-MSH_CMD_EXPORT(try_tft, tft test);
-
-struct rt_ringbuffer* rx_buf;
-
-int test_uart_irq_callback(void* param)
-{
-    char ch[8];
-    int ret;
-    rt_sem_t cnt = (rt_sem_t)param;
-
-    rt_interrupt_enter();
-
-    ret = uart_receive_data(UART_DEVICE_3, ch, 8);
-    for (int i = 0; i < ret; i++)
-    {
-        rt_ringbuffer_putchar(rx_buf, ch[i]);
-        rt_sem_release(cnt);
-    }
-
-    rt_interrupt_leave();
-    return 0;
-}
-
-static void uart_thread(void* param)
-{
-    rt_sem_t cnt = (rt_sem_t)param;
-    char ch;
-
-    while (1)
-    {
-        rt_sem_take(cnt, RT_WAITING_FOREVER);
-        if (rt_ringbuffer_getchar(rx_buf, &ch))
-        {
-            rt_kprintf("Hex: 0x%X, Char: ", ch);
-            if (ch >= 32 && ch <= 126)
-            {
-                rt_kprintf("%c", ch);
-            }
-            rt_kprintf("\n");
-        }
-    }
-}
-
-static void esp_send(int argc, char** argv)
-{
-    if (argc > 1)
-    {
-        uart_send_data(UART_DEVICE_3, argv[1], rt_strlen(argv[1]));
-        uart_send_data(UART_DEVICE_3, "\r\n", 2);
-        // uart_send_data(UART_DEVICE_1, "\r\n", 2);
-    }
-}
-MSH_CMD_EXPORT(esp_send, at send);
-
-static int uart_test_init(void)
-{
-    rt_thread_t tid;
-    rt_sem_t rx_cnt;
-
-    rx_buf = rt_ringbuffer_create(64);
-    rx_cnt = rt_sem_create("uart_cnt", 0, RT_IPC_FLAG_FIFO);
-
-    fpioa_set_function(7, FUNC_UART3_TX);
-    fpioa_set_function(6, FUNC_UART3_RX);
-    fpioa_set_function(8, FUNC_GPIOHS0);
-    gpiohs_set_drive_mode(0, GPIO_DM_OUTPUT);
-    gpiohs_set_pin(0, PIN_HIGH);
-
-    uart_init(UART_DEVICE_3);
-    uart_configure(UART_DEVICE_3, 115200, UART_BITWIDTH_8BIT, UART_STOP_1, UART_PARITY_NONE);
-    uart_set_receive_trigger(UART_DEVICE_3, UART_RECEIVE_FIFO_8);
-
-    uart_irq_register(UART_DEVICE_3, UART_RECEIVE, test_uart_irq_callback, rx_cnt, 5);
-
-    tid = rt_thread_create("uart", uart_thread, rx_cnt, 4096, 10, 20);
-    if (tid == NULL)
-    {
-        log_e("test bad.");
-        return -1;
-    }
-    // rt_thread_control(tid, RT_THREAD_CTRL_BIND_CPU, (void*)0);
-    rt_thread_startup(tid);
-
-    return 0;
-}
-INIT_APP_EXPORT(uart_test_init);
+MSH_CMD_EXPORT(change_tft, NONE);
 
 static void task(void* arg)
 {

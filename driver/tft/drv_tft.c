@@ -3,8 +3,12 @@
 #include <rtthread.h>
 #include <spi.h>
 #include <sysctl.h>
+#include <stdlib.h>
 
 #include "drv_tft.h"
+
+#define LOG_TAG "drv.tft"
+#include <ulog.h>
 
 struct tft_hw
 {
@@ -25,6 +29,7 @@ struct k210_tft
 };
 
 static struct k210_tft tft;
+static uint32_t fps;
 
 static void init_dcx(void)
 {
@@ -141,6 +146,9 @@ rt_err_t tft_hw_init(rt_device_t dev)
     /*display on*/
     tft_write_command(DISPALY_ON);
     rt_thread_mdelay(100);
+    /* alloc mem */
+    tft.info.framebuffer = rt_malloc(tft.info.width * tft.info.height * tft.info.bits_per_pixel / 8 * 2);
+    rt_memset(tft.info.framebuffer, 0, tft.info.width * tft.info.height * tft.info.bits_per_pixel / 8 * 2);
 
     return RT_EOK;
 }
@@ -161,7 +169,6 @@ int rt_hw_tft_init(void)
     tft.info.pixel_format   = RTGRAPHIC_PIXEL_FORMAT_RGB565;
     tft.info.width          = 320;
     tft.info.height         = 240;
-    // tft.info.framebuffer    = rt_malloc(tft.info.width * tft.info.height * tft.info.bits_per_pixel / 8);
 
     tft.parent.user_data = (void *)&tft.info;
 
@@ -208,5 +215,101 @@ void tft_clear(uint16_t color)
     uint32_t data = ((uint32_t)color << 16) | (uint32_t)color;
 
     tft_set_area(0, 0, tft.info.width - 1, tft.info.height - 1);
-    tft_fill_data(&data, tft.info.width * tft.info.height /2);
+    tft_fill_data(&data, tft.info.width * tft.info.height / 2);
 }
+
+void tft_draw_point(uint16_t x, uint16_t y, uint16_t color)
+{
+    if (x >= tft.info.width) x = tft.info.width - 1;
+    if (y >= tft.info.height) y = tft.info.height - 1;
+    tft_set_area(x, y, x, y);
+    tft_write_half(&color, 1);
+}
+
+void tft_draw_rectangle(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color)
+{
+    uint16_t x1, x2, y1, y2;
+    uint32_t data = 0;
+
+    if (x >= tft.info.width)
+        x1 = tft.info.width - 1;
+    else
+        x1 = x;
+    if (y >= tft.info.height)
+        y1 = tft.info.height - 1;
+    else
+        y1 = y;
+    if (x + width >= tft.info.width)
+        x2 = tft.info.width - 1;
+    else
+        x2 = x + width;
+    if (y + height >= tft.info.height)
+        y2 = tft.info.height - 1;
+    else
+        y2 = y + height;
+    data = ((uint32_t)color << 16 | (uint32_t)color);
+    tft_set_area(x1, y1, x2, y2);
+    tft_fill_data(&data, (x2 - x1) * (y2 - y1) / 2);
+}
+
+void tft_draw_picture(uint16_t x1, uint16_t y1, uint16_t width, uint16_t height, uint16_t *ptr)
+{
+    tft_set_area(x1, y1, x1 + width, y1 + height);
+    tft_write_half(ptr, width * height);
+}
+
+void tft_flush(void)
+{
+    if (tft.info.framebuffer == RT_NULL) return;
+    tft_set_area(0, 0, tft.info.width - 1, tft.info.height - 1);
+
+    set_dcx_data();
+    spi_init(tft.hw.spi_channel, SPI_WORK_MODE_0, SPI_FF_OCTAL, 16, 0);
+    spi_init_non_standard(tft.hw.spi_channel, 0 /*instrction length*/, 16 /*address length*/, 0 /*wait cycles*/,
+                          SPI_AITM_AS_FRAME_FORMAT /*spi address trans mode*/);
+    spi_send_data_u32_as_u16(tft.hw.dma_channel, tft.hw.spi_channel, tft.hw.select, tft.info.framebuffer,
+                             tft.info.width * tft.info.height);
+}
+
+static void tft_thread(void* param)
+{
+    uint32_t t = *((uint32_t*)param);
+    rt_tick_t start, end;
+    struct rt_device_graphic_info* info;
+    rt_device_t dev = rt_device_find("tft");
+
+    info = (struct rt_device_graphic_info*)dev->user_data;
+    tft_clear(0);
+    log_d("delay tick: %d", t);
+
+    while (1)
+    {
+        start = rt_tick_get();
+        tft_flush();
+        rt_thread_mdelay(t);
+        end = rt_tick_get();
+        fps = RT_TICK_PER_SECOND * 100 / (end - start);
+    }
+}
+
+static void get_fps(void) { rt_kprintf("fps: %d.%02d\n", fps / 100, fps % 100); }
+MSH_CMD_EXPORT(get_fps, show fps);
+
+static void try_tft(int argc, char** argv)
+{
+    rt_device_t tft;
+    rt_thread_t tid;
+    uint32_t param = 100;
+
+    tft = rt_device_find("tft");
+    if (tft)
+    {
+        if (tft->flag & RT_DEVICE_FLAG_ACTIVATED) return;
+        rt_device_init(tft);
+    }
+    if (argc > 1) param = atoi(argv[1]);
+    tid = rt_thread_create("tft", tft_thread, &param, 4096, 10, 50);
+    rt_thread_startup(tid);
+    rt_thread_delay(3);
+}
+MSH_CMD_EXPORT(try_tft, tft test);

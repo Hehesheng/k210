@@ -15,7 +15,10 @@
             "ostream": "c",
             "fstream": "c",
             "algorithm": "c",
-            "timer.h": "c"
+            "timer.h": "c",
+            "errno.h": "c",
+            "i2c.h": "c",
+            "ns2009.h": "c"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
     }

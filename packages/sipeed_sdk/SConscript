@@ -1,0 +1,19 @@
+import os
+from building import * 
+
+# get current dir path
+cwd = GetCurrentDir()
+
+# init src and inc vars
+src = []
+inc = []
+
+# add getparse common include
+inc = inc + [cwd + '/include']
+
+# add getparse basic code
+src += ['src/sipeed_i2c.c']
+
+group = DefineGroup('sipeed_sdk', src, depend = [''], CPPPATH = inc)
+
+Return('group')
