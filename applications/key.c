@@ -18,8 +18,6 @@
 
 static uint8_t get_pin_value(button* btn) { return gpio_get_pin((size_t)btn->user); }
 
-static void start_tft(void* param) { msh_exec("try_tft", strlen("try_tft")); }
-
 static void button_callback(void* param)
 {
     button* btn = (button*)param;
@@ -44,7 +42,6 @@ static void key_thread(void* param)
             button_attach(key[i], j, button_callback);
         }
     }
-    button_attach(key[1], SINGLE_CLICK, start_tft);
 
     while (1)
     {

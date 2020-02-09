@@ -236,17 +236,6 @@ static void rt_thread_idle_entry(void *parameter)
     {
         while (1)
         {
-#ifdef RT_USING_IDLE_HOOK
-            rt_size_t i;
-
-            for (i = 0; i < RT_IDLE_HOOK_LIST_SIZE; i++)
-            {
-                if (idle_hook_list[i] != RT_NULL)
-                {
-                    idle_hook_list[i]();
-                }
-            }
-#endif
             rt_hw_secondary_cpu_idle_exec();
         }
     }

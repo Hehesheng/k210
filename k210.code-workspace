@@ -18,7 +18,12 @@
             "timer.h": "c",
             "errno.h": "c",
             "i2c.h": "c",
-            "ns2009.h": "c"
+            "ns2009.h": "c",
+            "lvgl.h": "c",
+            "lv_log.h": "c",
+            "touchscreen.h": "c",
+            "lv_disp.h": "c",
+            "drv_tft.h": "c"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
     }

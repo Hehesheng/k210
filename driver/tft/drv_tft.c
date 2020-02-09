@@ -2,8 +2,8 @@
 #include <gpiohs.h>
 #include <rtthread.h>
 #include <spi.h>
-#include <sysctl.h>
 #include <stdlib.h>
+#include <sysctl.h>
 
 #include "drv_tft.h"
 
@@ -26,10 +26,12 @@ struct k210_tft
     struct rt_device parent;
     struct tft_hw hw;
     struct rt_device_graphic_info info;
+    uint32_t fps;
 };
 
 static struct k210_tft tft;
-static uint32_t fps;
+
+static void tft_thread(void *param);
 
 static void init_dcx(void)
 {
@@ -111,6 +113,7 @@ static void tft_fill_data(uint32_t *data_buf, uint32_t length)
 rt_err_t tft_hw_init(rt_device_t dev)
 {
     uint8_t data;
+    rt_thread_t tid;
 
     init_clk();
     init_cs();
@@ -147,8 +150,11 @@ rt_err_t tft_hw_init(rt_device_t dev)
     tft_write_command(DISPALY_ON);
     rt_thread_mdelay(100);
     /* alloc mem */
-    tft.info.framebuffer = rt_malloc(tft.info.width * tft.info.height * tft.info.bits_per_pixel / 8 * 2);
+    tft.info.framebuffer = rt_malloc_align(tft.info.width * tft.info.height * tft.info.bits_per_pixel / 8 * 2, 8);
     rt_memset(tft.info.framebuffer, 0, tft.info.width * tft.info.height * tft.info.bits_per_pixel / 8 * 2);
+
+    tid = rt_thread_create("tft", tft_thread, RT_NULL, 4096, 10, 50);
+    rt_thread_startup(tid);
 
     return RT_EOK;
 }
@@ -271,45 +277,50 @@ void tft_flush(void)
                              tft.info.width * tft.info.height);
 }
 
-static void tft_thread(void* param)
-{
-    uint32_t t = *((uint32_t*)param);
-    rt_tick_t start, end;
-    struct rt_device_graphic_info* info;
-    rt_device_t dev = rt_device_find("tft");
+uint32_t *tft_get_frambuffer(void) { return (uint32_t *)tft.info.framebuffer; }
 
-    info = (struct rt_device_graphic_info*)dev->user_data;
+static void tft_thread(void *param)
+{
+    uint32_t t = 10;
+    rt_tick_t start, end;
+    struct k210_tft *dev = (struct k210_tft *)rt_device_find("tft");
+
     tft_clear(0);
-    log_d("delay tick: %d", t);
 
     while (1)
     {
         start = rt_tick_get();
         tft_flush();
         rt_thread_mdelay(t);
-        end = rt_tick_get();
-        fps = RT_TICK_PER_SECOND * 100 / (end - start);
+        end      = rt_tick_get();
+        dev->fps = RT_TICK_PER_SECOND * 100 / (end - start);
+        /* keep 60fps */
+        if (dev->fps > 6000)
+            t++;
+        else
+            t--;
     }
 }
 
-static void get_fps(void) { rt_kprintf("fps: %d.%02d\n", fps / 100, fps % 100); }
+static void get_fps(int argc, char **argv)
+{
+    struct k210_tft *dev;
+
+    if (argc < 2)
+    {
+        return;
+    }
+    dev = (struct k210_tft *)rt_device_find(argv[1]);
+    if (dev)
+    {
+        rt_kprintf("fps: %d.%02d\n", dev->fps / 100, dev->fps % 100);
+    }
+}
 MSH_CMD_EXPORT(get_fps, show fps);
 
-static void try_tft(int argc, char** argv)
+static void run_tft(int argc, char **argv)
 {
-    rt_device_t tft;
-    rt_thread_t tid;
-    uint32_t param = 100;
-
-    tft = rt_device_find("tft");
-    if (tft)
-    {
-        if (tft->flag & RT_DEVICE_FLAG_ACTIVATED) return;
-        rt_device_init(tft);
-    }
-    if (argc > 1) param = atoi(argv[1]);
-    tid = rt_thread_create("tft", tft_thread, &param, 4096, 10, 50);
-    rt_thread_startup(tid);
-    rt_thread_delay(3);
+    if (tft.parent.flag & RT_DEVICE_FLAG_ACTIVATED) return;
+    rt_device_init(&tft.parent);
 }
-MSH_CMD_EXPORT(try_tft, tft test);
+MSH_CMD_EXPORT(run_tft, tft run);

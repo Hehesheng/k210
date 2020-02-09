@@ -13,6 +13,15 @@
                 "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/driver/tft",
                 "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/driver/touch/include",
                 "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/driver/touch/ns2009/include",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/LittlevGL2RTT-latest",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/LittlevGL2RTT-latest/src",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/LittlevGL2RTT-latest/src/lv_core",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/LittlevGL2RTT-latest/src/lv_draw",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/LittlevGL2RTT-latest/src/lv_font",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/LittlevGL2RTT-latest/src/lv_hal",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/LittlevGL2RTT-latest/src/lv_misc",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/LittlevGL2RTT-latest/src/lv_objx",
+                "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/LittlevGL2RTT-latest/src/lv_themes",
                 "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/MultiButton-v1.0.2",
                 "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/cJSON-v1.0.2",
                 "/mnt/c/Users/hhslz/OneDrive/Desktop/workSpace/k210/packages/dstr-v0.1.0/inc",
@@ -34,6 +43,7 @@
             ],
             "defines": [
                 "HAVE_CCONFIG_H",
+                "LV_CONF_INCLUDE_SIMPLE",
                 "RT_USING_NEWLIB"
             ]
         }

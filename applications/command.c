@@ -309,40 +309,42 @@ static void change_tft(int argc, char** argv)
 
     while (len--)
     {
-        ptr[index++] = color;
+        ptr[index] = color;
+        ptr[index] |= (~color) << 16;
+        index++;
         if (index >= 240 * 320) index = 0;
     }
 }
 MSH_CMD_EXPORT(change_tft, NONE);
 
-static void task(void* arg)
-{
-    LOG_I("The task on thread %.*s is running.", RT_NAME_MAX, rt_thread_self()->name);
-    rt_thread_delay(rt_tick_from_millisecond((uint32_t)arg));
-    LOG_I("The task on thread %.*s will finish.", RT_NAME_MAX, rt_thread_self()->name);
-}
+// static void task(void* arg)
+// {
+//     LOG_I("The task on thread %.*s is running.", RT_NAME_MAX, rt_thread_self()->name);
+//     rt_thread_delay(rt_tick_from_millisecond((uint32_t)arg));
+//     LOG_I("The task on thread %.*s will finish.", RT_NAME_MAX, rt_thread_self()->name);
+// }
 
-static void thread_pool_sample(uint8_t argc, char** argv)
-{
-    thread_pool pool;
+// static void thread_pool_sample(uint8_t argc, char** argv)
+// {
+//     thread_pool pool;
 
-    init_thread_pool(&pool, "sam", 3, 2048);
-    /* add 5 task to thread pool */
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    /* wait 10S */
-    rt_thread_delay(rt_tick_from_millisecond(10 * 1000));
-    /* delete all task */
-    pool.del_all(&pool);
-    rt_thread_delay(RT_TICK_PER_SECOND);
-    /* destroy the thread pool */
-    pool.destroy(&pool);
-}
-MSH_CMD_EXPORT(thread_pool_sample, Run thread pool sample);
+//     init_thread_pool(&pool, "sam", 3, 2048);
+//     /* add 5 task to thread pool */
+//     pool.add_task(&pool, task, (void*)(rand() % 5000));
+//     pool.add_task(&pool, task, (void*)(rand() % 5000));
+//     pool.add_task(&pool, task, (void*)(rand() % 5000));
+//     pool.add_task(&pool, task, (void*)(rand() % 5000));
+//     pool.add_task(&pool, task, (void*)(rand() % 5000));
+//     pool.add_task(&pool, task, (void*)(rand() % 5000));
+//     pool.add_task(&pool, task, (void*)(rand() % 5000));
+//     pool.add_task(&pool, task, (void*)(rand() % 5000));
+//     pool.add_task(&pool, task, (void*)(rand() % 5000));
+//     /* wait 10S */
+//     rt_thread_delay(rt_tick_from_millisecond(10 * 1000));
+//     /* delete all task */
+//     pool.del_all(&pool);
+//     rt_thread_delay(RT_TICK_PER_SECOND);
+//     /* destroy the thread pool */
+//     pool.destroy(&pool);
+// }
+// MSH_CMD_EXPORT(thread_pool_sample, Run thread pool sample);
