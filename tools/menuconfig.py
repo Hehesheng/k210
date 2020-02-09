@@ -13,7 +13,7 @@ def main():
     os.system("~/.env/tools/scripts/pkgs --update")
     # os.system("unset ALL_PROXY")
     subprocess.run(["scons", "--target=vsc", "-s"])
-    subprocess.run(["scons", "--target=mdk5", "-s"])
+    # subprocess.run(["scons", "--target=mdk5", "-s"])
     subprocess.run(["echo", "Building......."])
     subprocess.run(["python3", "./tools/rebuild.py"])
 
