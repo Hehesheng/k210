@@ -61,6 +61,7 @@ static lv_theme_t *themes[8];
 /**
  * Test run time theme change
  */
+lv_obj_t *scr;
 void lv_test_theme_2(void)
 {
     /* By doing this, we hide the first (empty) option. */
@@ -76,7 +77,7 @@ void lv_test_theme_2(void)
 
     lv_theme_set_current(th_act);
 
-    lv_obj_t *scr = lv_obj_create(NULL, NULL);
+    scr = lv_obj_create(NULL, NULL);
     lv_disp_load_scr(scr);
 
     header_create();
@@ -90,7 +91,7 @@ void lv_test_theme_2(void)
 
 static void header_create(void)
 {
-    header = lv_cont_create(lv_disp_get_scr_act(NULL), NULL);
+    header = lv_cont_create(scr, NULL);
     lv_obj_set_width(header, lv_disp_get_hor_res(NULL));
 
     lv_obj_t *sym = lv_label_create(header, NULL);
@@ -110,7 +111,7 @@ static void sb_create(void)
     lv_coord_t hres = lv_disp_get_hor_res(NULL);
     lv_coord_t vres = lv_disp_get_ver_res(NULL);
 
-    sb = lv_page_create(lv_disp_get_scr_act(NULL), NULL);
+    sb = lv_page_create(scr, NULL);
     lv_page_set_scrl_layout(sb, LV_LAYOUT_COL_M);
     lv_page_set_style(sb, LV_PAGE_STYLE_BG, &lv_style_transp_tight);
     lv_page_set_style(sb, LV_PAGE_STYLE_SCRL, &lv_style_transp);
@@ -149,7 +150,7 @@ static void content_create(void)
     lv_coord_t hres = lv_disp_get_hor_res(NULL);
     lv_coord_t vres = lv_disp_get_ver_res(NULL);
 
-    content = lv_page_create(lv_disp_get_scr_act(NULL), NULL);
+    content = lv_page_create(scr, NULL);
 
     if (hres > vres)
     {

@@ -84,6 +84,7 @@ static void lvgl_handle_thread(void *p)
             t++;
         else
             t--;
+        if (t > RT_TICK_PER_SECOND) t = 0;
     }
 }
 

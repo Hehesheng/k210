@@ -299,6 +299,7 @@ static void tft_thread(void *param)
             t++;
         else
             t--;
+        if (t > RT_TICK_PER_SECOND) t = 0;
     }
 }
 

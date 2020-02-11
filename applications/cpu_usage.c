@@ -4,13 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "cpu_usage.h"
+
 #include <sysctl.h>
 #include <timer.h>
 
 #define LOG_TAG "app.cpu.usage"
 #include <ulog.h>
-
-#define MAGIC_NUM 0x6e6e56e8
 
 #define TIMER_NUM TIMER_DEVICE_0
 #define TIMER_CHANNEL TIMER_CHANNEL_0
@@ -21,17 +21,6 @@
 
 static rt_uint64_t timer_reload_num;
 static volatile rt_uint64_t timer_tick;
-
-typedef struct thread_usage
-{
-    rt_uint32_t magic;
-    rt_uint64_t enter_tick[2];
-    rt_uint64_t leave_tick[2];
-    rt_uint64_t count_tick[2];
-    rt_uint64_t cost_tick[2];
-    rt_uint8_t major[2];
-    rt_uint8_t minor[2];
-} * thread_usage_t;
 
 static void clean_up_call(rt_thread_t tid)
 {
@@ -171,7 +160,6 @@ static void get_cpu_usage(void)
     thread_usage_t data;
     rt_thread_t tid;
     rt_list_t* node;
-    size_t cost;
 
     rt_kprintf("%-*.s  cpu0    cpu1\n", RT_NAME_MAX, "thread");
     for (int i = 0; i < RT_NAME_MAX; i++) rt_kprintf("-");
