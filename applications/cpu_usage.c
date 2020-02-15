@@ -127,7 +127,7 @@ static int timer_irq(void* param)
             }
             else
             {
-                data->major[i] = 100;
+                data->major[i] = 0;
                 data->minor[i] = 0;
             }
         }

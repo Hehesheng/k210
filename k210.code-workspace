@@ -6,24 +6,13 @@
     ],
     "settings": {
         "files.associations": {
+            "uart.h": "c",
             "plic.h": "c",
-            "fpioa.h": "c",
-            "sysctl.h": "c",
-            "drv_io_config.h": "c",
-            "spi.h": "c",
-            "*.tcc": "c",
-            "ostream": "c",
-            "fstream": "c",
-            "algorithm": "c",
-            "timer.h": "c",
-            "errno.h": "c",
-            "i2c.h": "c",
-            "ns2009.h": "c",
-            "lvgl.h": "c",
-            "lv_log.h": "c",
-            "touchscreen.h": "c",
-            "lv_disp.h": "c",
-            "drv_tft.h": "c"
+            "typeinfo": "c",
+            "lvgl_cpu_usage.h": "c",
+            "array": "c",
+            "string": "c",
+            "string_view": "c"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
     }
