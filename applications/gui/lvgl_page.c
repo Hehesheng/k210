@@ -8,14 +8,14 @@ typedef struct _menu_obj_info
     char *txt;
     lv_event_cb_t event_cb;
 } menu_obj_info;
-#define MENU_INFO_CONFIG(img, txt, event_cb) \
-    {                                        \
-        txt, img, txt, event_cb,             \
-    }
+
+#define MENU_INFO_CONFIG(img, txt, event_cb) {txt, img, txt, event_cb,}
+
 static const menu_obj_info menu_info[] = {
     MENU_INFO_CONFIG(LV_SYMBOL_LIST, "CPU", lvgl_cpu_usage_press_cb),
     MENU_INFO_CONFIG(LV_SYMBOL_WARNING, "Terminal", NULL),
     MENU_INFO_CONFIG(LV_SYMBOL_DRIVE, "Touchscreen", NULL),
+    MENU_INFO_CONFIG(LV_SYMBOL_DIRECTORY, "Information", NULL),
     MENU_INFO_CONFIG(NULL, NULL, NULL),
 };
 
