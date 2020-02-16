@@ -12,7 +12,8 @@
             "lvgl_cpu_usage.h": "c",
             "array": "c",
             "string": "c",
-            "string_view": "c"
+            "string_view": "c",
+            "finsh.h": "c"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
     }

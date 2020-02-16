@@ -1,4 +1,5 @@
 #include "lvgl_cpu_usage.h"
+#include "lvgl_terminal.h"
 #include "lvgl.h"
 
 typedef struct _menu_obj_info
@@ -13,7 +14,7 @@ typedef struct _menu_obj_info
 
 static const menu_obj_info menu_info[] = {
     MENU_INFO_CONFIG(LV_SYMBOL_LIST, "CPU", lvgl_cpu_usage_press_cb),
-    MENU_INFO_CONFIG(LV_SYMBOL_WARNING, "Terminal", NULL),
+    MENU_INFO_CONFIG(LV_SYMBOL_WARNING, "Terminal", lvgl_terminal_press_cb),
     MENU_INFO_CONFIG(LV_SYMBOL_DRIVE, "Touchscreen", NULL),
     MENU_INFO_CONFIG(LV_SYMBOL_DIRECTORY, "Information", NULL),
     MENU_INFO_CONFIG(NULL, NULL, NULL),
