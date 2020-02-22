@@ -63,9 +63,19 @@ SECTIONS
         __rt_init_end = .;
         . = ALIGN(8);
 
+        /* section information for unit test */
+        . = ALIGN(8);
         __rt_utest_tc_tab_start = .;
         KEEP(*(UtestTcTab))
         __rt_utest_tc_tab_end = .;
+        . = ALIGN(8);
+
+        /* section information for lvgl apps */
+        . = ALIGN(8);
+        __lvgl_apps_tab_start = .;
+        KEEP(*(LVObjTab))
+        __lvgl_apps_tab_end = .;
+        . = ALIGN(8);
 
         . = ALIGN(8);
         _etext = .;
