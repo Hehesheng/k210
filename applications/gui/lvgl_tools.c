@@ -11,14 +11,7 @@ extern const int __lvgl_apps_tab_end;
 static const void *lvgl_apps_start_point = &__lvgl_apps_tab_start;
 static const void *lvgl_apps_end_point   = &__lvgl_apps_tab_end;
 
-LVGL_APP_ITEM_EXPORT(fun, LV_SYMBOL_AUDIO, NULL)
-LVGL_APP_ITEM_EXPORT(info, LV_SYMBOL_DRIVE, NULL)
-LVGL_APP_ITEM_EXPORT(terminal, LV_SYMBOL_BACKSPACE, NULL)
-LVGL_APP_ITEM_EXPORT(half, LV_SYMBOL_UP, NULL)
-
-LVGL_WIDGET_ITEM_EXPORT(fun, NULL, NULL)
-
-static void tab_test(void)
+static void lvgl_tab_list(void)
 {
     struct __lvgl_obj_base *obj;
     struct __lvgl_obj_base **point;
@@ -34,10 +27,9 @@ static void tab_test(void)
         rt_kprintf("point:0x%X\n", point);
         rt_kprintf("obj:0x%X\n", obj);
         rt_kprintf("name: %s\n", obj->name);
-        rt_kprintf("text: %s\n", obj->text);
     }
 }
-MSH_CMD_EXPORT(tab_test, test);
+MSH_CMD_EXPORT(lvgl_tab_list, list lvgl tab obj);
 
 lv_obj_t *lv_find_obj_parent_by_type(lv_obj_t *obj, char *name)
 {

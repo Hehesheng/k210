@@ -1,4 +1,4 @@
-#include "lvgl_terminal.h"
+#include <lvgl.h>
 #include "lvgl_tools.h"
 
 void lvgl_terminal_press_cb(lv_obj_t *btn, lv_event_t event)
@@ -19,3 +19,4 @@ void lvgl_terminal_press_cb(lv_obj_t *btn, lv_event_t event)
         lv_obj_align(ta, page, LV_ALIGN_IN_TOP_MID, 0, 0);
     }
 }
+LVGL_APP_ITEM_EXPORT(Terminal, LV_SYMBOL_WARNING, lvgl_terminal_press_cb);

@@ -1,4 +1,4 @@
-#include "lvgl_cpu_usage.h"
+#include <lvgl.h>
 #include "cpu_usage.h"
 #include "lvgl_tools.h"
 
@@ -182,3 +182,4 @@ void lvgl_cpu_usage_press_cb(lv_obj_t *btn, lv_event_t event)
         add_thread_list(list);
     }
 }
+LVGL_APP_ITEM_EXPORT(CPU, LV_SYMBOL_LIST, lvgl_cpu_usage_press_cb);
