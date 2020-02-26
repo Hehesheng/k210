@@ -8,18 +8,18 @@ struct __lvgl_obj_base
 
 extern const int __lvgl_apps_tab_start;
 extern const int __lvgl_apps_tab_end;
-static const void *lvgl_apps_start_point = &__lvgl_apps_tab_start;
-static const void *lvgl_apps_end_point   = &__lvgl_apps_tab_end;
+const void *lvgl_obj_start_point = &__lvgl_apps_tab_start;
+const void *lvgl_obj_end_point   = &__lvgl_apps_tab_end;
 
 static void lvgl_tab_list(void)
 {
     struct __lvgl_obj_base *obj;
     struct __lvgl_obj_base **point;
 
-    rt_kprintf("start: 0x%X\n", lvgl_apps_start_point);
-    rt_kprintf("end: 0x%X\n", lvgl_apps_end_point);
+    rt_kprintf("start: 0x%X\n", lvgl_obj_start_point);
+    rt_kprintf("end: 0x%X\n", lvgl_obj_end_point);
 
-    for (point = (struct __lvgl_obj_base **)lvgl_apps_start_point; point < (struct __lvgl_obj_base **)lvgl_apps_end_point;
+    for (point = (struct __lvgl_obj_base **)lvgl_obj_start_point; point < (struct __lvgl_obj_base **)lvgl_obj_end_point;
          point++)
     {
         obj = *point;

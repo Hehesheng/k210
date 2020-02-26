@@ -3,6 +3,8 @@
 
 static lv_obj_t *parent;
 static lv_obj_t *header;
+LVGL_WIDGET_ITEM_EXPORT(display_parent, parent);
+LVGL_WIDGET_ITEM_EXPORT(display_header, header);
 
 static void header_create(void)
 {
@@ -36,30 +38,14 @@ static void menu_list_create(void)
 
     lv_obj_set_size(list, lv_obj_get_width(interface), lv_obj_get_height(interface));
     lv_obj_align(list, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
-    /* 创建各个按钮 */
-    // for (int i = 0; menu_info[i].name != NULL; i++)
-    // {
-    //     lv_obj_t *btn = lv_list_add_btn(list, menu_info[i].img, menu_info[i].txt);
-    //     lv_obj_set_event_cb(btn, menu_info[i].event_cb);
-    // }
+
+    struct __lvgl_app_item *obj;
+    LVGL_LIST_ALL_EXPORT_OBJ(obj)
     {
-        extern const int __lvgl_apps_tab_start;
-        extern const int __lvgl_apps_tab_end;
-        const void *lvgl_apps_start_point = &__lvgl_apps_tab_start;
-        const void *lvgl_apps_end_point   = &__lvgl_apps_tab_end;
-        struct __lvgl_app_item *obj;
-        struct __lvgl_app_item **point;
-
-        for (point = (struct __lvgl_app_item **)lvgl_apps_start_point; point < (struct __lvgl_app_item **)lvgl_apps_end_point;
-             point++)
+        if (strncmp(obj->name, "__app_", 6) == 0)
         {
-            obj = *point;
-
-            if (strncmp(obj->name, "__app_", 6) == 0)
-            {
-                lv_obj_t *btn = lv_list_add_btn(list, obj->img, obj->text);
-                lv_obj_set_event_cb(btn, obj->cb);
-            }
+            lv_obj_t *btn = lv_list_add_btn(list, obj->img, obj->text);
+            lv_obj_set_event_cb(btn, obj->cb);
         }
     }
 }

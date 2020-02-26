@@ -77,6 +77,11 @@ SECTIONS
         __lvgl_apps_tab_end = .;
         . = ALIGN(8);
 
+        PROVIDE(__ctors_start__ = .);
+        KEEP (*(SORT(.init_array.*)))
+        KEEP (*(.init_array))
+        PROVIDE(__ctors_end__ = .);
+
         . = ALIGN(8);
         _etext = .;
     } > SRAM

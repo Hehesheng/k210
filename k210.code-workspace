@@ -13,7 +13,13 @@
             "array": "c",
             "string": "c",
             "string_view": "c",
-            "finsh.h": "c"
+            "finsh.h": "c",
+            "functional": "cpp",
+            "istream": "cpp",
+            "ostream": "cpp",
+            "tuple": "cpp",
+            "type_traits": "cpp",
+            "utility": "cpp"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
     }
