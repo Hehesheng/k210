@@ -12,7 +12,4 @@ enum littlevgl2rtt_input_state
     LITTLEVGL2RTT_INPUT_MOVE = 0x03
 }; 
 
-void* lvgl_malloc(uint32_t size);
-void lvgl_free(void* p);
-
 #endif

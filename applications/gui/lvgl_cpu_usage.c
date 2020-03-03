@@ -2,6 +2,9 @@
 #include "cpu_usage.h"
 #include "lvgl_tools.h"
 
+#define LOG_TAG "lv.cpu"
+#include <ulog.h>
+
 typedef struct list_btn_info
 {
     lv_obj_t *btn;
@@ -151,8 +154,12 @@ static void close_press_cb(lv_obj_t *btn, lv_event_t event)
 {
     if (event == LV_EVENT_CLICKED)
     {
+        lv_obj_del(lv_remove_activity_obj());
+        // lv_obj_del(lv_find_obj_parent_by_type(btn, "lv_page"));
+    }
+    else if (event == LV_EVENT_DELETE)
+    {
         lv_task_del(task);
-        lv_obj_del(lv_find_obj_parent_by_type(btn, "lv_page"));
     }
 }
 
@@ -180,6 +187,8 @@ void lvgl_cpu_usage_press_cb(lv_obj_t *btn, lv_event_t event)
         lv_obj_set_event_cb(close, close_press_cb);
         /* 显示线程 */
         add_thread_list(list);
+        /* 添加活动对象 */
+        lv_add_activity_obj(page);
     }
 }
 LVGL_APP_ITEM_EXPORT(CPU, LV_SYMBOL_LIST, lvgl_cpu_usage_press_cb);

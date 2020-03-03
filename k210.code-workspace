@@ -19,8 +19,20 @@
             "ostream": "cpp",
             "tuple": "cpp",
             "type_traits": "cpp",
-            "utility": "cpp"
+            "utility": "cpp",
+            "gpiohs.h": "c",
+            "ulog.h": "c",
+            "multi_button.h": "c"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
+        "files.exclude": {
+            "**/build": true,
+            "**/images": true,
+            "**/rt-thread/libcpu/risc-v/bumblebee": true,
+            "**/rt-thread/libcpu/risc-v/common": true,
+            "**/rt-thread/libcpu/risc-v/e310": true,
+            "**/rt-thread/libcpu/risc-v/rv32m1": true,
+            "**/rt-thread/tools": true
+        },
     }
 }

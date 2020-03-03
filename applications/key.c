@@ -69,4 +69,4 @@ static int key_init(void)
         rt_thread_startup(tid);
     }
 }
-INIT_DEVICE_EXPORT(key_init);
+INIT_PREV_EXPORT(key_init);

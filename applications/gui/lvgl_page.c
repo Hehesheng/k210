@@ -1,6 +1,11 @@
 #include "lvgl.h"
 #include "lvgl_tools.h"
 
+#include "multi_button.h"
+
+#define LOG_TAG "lv.page"
+#include <ulog.h>
+
 static lv_obj_t *parent;
 static lv_obj_t *header;
 LVGL_WIDGET_ITEM_EXPORT(display_parent, parent);
@@ -77,14 +82,23 @@ static void lvgl_startup_thread(void *p)
     menu_list_create();
 }
 
+static void cancel_cb(void *param)
+{
+    lv_obj_t *obj;
+
+    obj = lv_remove_activity_obj();
+    if (obj) lv_obj_del(obj);
+}
+
 static int default_page_init(void)
 {
+    button *btn;
     rt_thread_t tid = rt_thread_create("lvgl_init", lvgl_startup_thread, NULL, 4096, 20, 100);
-    if (tid)
-    {
-        rt_thread_startup(tid);
-    }
+    if (tid == NULL) return -1;
+    rt_thread_startup(tid);
 
-    return 0;
+    btn = find_button_by_name("MEDIUM");
+    if (btn == NULL) return -2;
+    button_attach(btn, SINGLE_CLICK, cancel_cb);
 }
 INIT_APP_EXPORT(default_page_init);

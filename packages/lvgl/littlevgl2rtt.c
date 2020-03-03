@@ -53,16 +53,12 @@ static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_
     lv_disp_flush_ready(disp_drv);
 }
 
-void *lvgl_malloc(uint32_t size) { return rt_malloc_align(size, 8); }
-
-void lvgl_free(void *p) { rt_free_align(p); }
-
 static void lvgl_tick_run(void *p)
 {
     while (1)
     {
-        lv_tick_inc(1);
-        rt_thread_delay(1);
+        lv_tick_inc(20);
+        rt_thread_delay(20);
     }
 }
 
@@ -79,8 +75,8 @@ static void lvgl_handle_thread(void *p)
         rt_thread_delay(t);
         end = rt_tick_get();
         fps = RT_TICK_PER_SECOND * 100 / (end - start);
-        /* keep 60fps */
-        if (fps > 6000)
+        /* keep 30fps */
+        if (fps > 3000)
             t++;
         else
             t--;

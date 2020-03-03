@@ -17,6 +17,8 @@ void lvgl_terminal_press_cb(lv_obj_t *btn, lv_event_t event)
         lv_obj_t *ta = lv_btn_create(page, NULL);
         lv_obj_set_size(ta, lv_obj_get_width(interface), lv_obj_get_height(interface));
         lv_obj_align(ta, page, LV_ALIGN_IN_TOP_MID, 0, 0);
+        /* 添加活动对象 */
+        lv_add_activity_obj(page);
     }
 }
 LVGL_APP_ITEM_EXPORT(Terminal, LV_SYMBOL_WARNING, lvgl_terminal_press_cb);

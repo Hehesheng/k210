@@ -294,8 +294,8 @@ static void tft_thread(void *param)
         rt_thread_mdelay(t);
         end      = rt_tick_get();
         dev->fps = RT_TICK_PER_SECOND * 100 / (end - start);
-        /* keep 60fps */
-        if (dev->fps > 6000)
+        /* keep 30fps */
+        if (dev->fps > 3000)
             t++;
         else
             t--;

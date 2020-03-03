@@ -44,4 +44,8 @@ struct __lvgl_widget_item
 
 lv_obj_t *lv_find_obj_parent_by_type(lv_obj_t *obj, char *name);
 
+int lv_add_activity_obj(lv_obj_t *obj);
+lv_obj_t *lv_remove_activity_obj(void);
+lv_obj_t *lv_get_activity_obj(void);
+
 #endif  // __LVGL_TOOLS_H__
