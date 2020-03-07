@@ -5,7 +5,7 @@
 #define LOG_TAG "lv.cpu"
 #include <ulog.h>
 
-typedef struct list_btn_info
+typedef struct thread_btn_info
 {
     lv_obj_t *btn;
     lv_obj_t *label[2];
@@ -13,8 +13,8 @@ typedef struct list_btn_info
     lv_obj_t *chart;
     lv_obj_t *chart_label;
     lv_chart_series_t *cpu_ser[2];
-    void *user_data;
-} list_btn_info_t;
+    void *thread_info;
+} thread_btn_info_t;
 
 static lv_task_t *task;
 
@@ -25,15 +25,18 @@ static void refresh_cpu_task(lv_task_t *task)
     thread_usage_t data;
     rt_thread_t tid;
     rt_list_t *node;
-    list_btn_info_t *btn_info;
+    thread_btn_info_t *btn_info;
 
     for (node = info->object_list.next; node != &(info->object_list); node = node->next)
     {
         tid  = rt_list_entry(node, struct rt_thread, list);
+        /* 获取线程信息 */
         data = (thread_usage_t)tid->user_data;
         if (data != RT_NULL && data->magic == MAGIC_NUM)
         {
-            btn_info = (list_btn_info_t *)data->user_data;
+            /* 获取线程按键结构体 */
+            btn_info = (thread_btn_info_t *)data->user_data;
+            if (btn_info == NULL) continue;
 
             lv_bar_set_value(btn_info->bar[0], data->major[0], true);
             lv_bar_set_value(btn_info->bar[1], data->major[1], true);
@@ -57,8 +60,8 @@ static void chart_close_btn_cb(lv_obj_t *btn, lv_event_t event)
     if (event == LV_EVENT_CLICKED)
     {
         lv_obj_t *cont = lv_find_obj_parent_by_type(btn, "lv_cont");
-
-        list_btn_info_t *btn_info = (list_btn_info_t *)btn->user_data;
+        /* 获取线程信息结构体 */
+        thread_btn_info_t *btn_info = (thread_btn_info_t *)btn->user_data;
 
         btn_info->chart       = NULL;
         btn_info->chart_label = NULL;
@@ -79,8 +82,10 @@ static void cpu_list_btn_cb(lv_obj_t *btn, lv_event_t event)
     }
     else if (event == LV_EVENT_CLICKED)
     {
-        list_btn_info_t *btn_info = (list_btn_info_t *)btn->user_data;
-        thread_usage_t data       = (thread_usage_t)btn_info->user_data;
+        /* 获取线程按键结构体 */
+        thread_btn_info_t *btn_info = (thread_btn_info_t *)btn->user_data;
+        /* 获取线程信息结构体 */
+        thread_usage_t data         = (thread_usage_t)btn_info->thread_info;
 
         lv_obj_t *page = lv_find_obj_parent_by_type(btn, "lv_page");
         lv_obj_t *cont = lv_cont_create(page, NULL);
@@ -109,6 +114,7 @@ static void cpu_list_btn_cb(lv_obj_t *btn, lv_event_t event)
         lv_obj_t *close = lv_btn_create(cont, NULL);
         lv_label_set_text(lv_label_create(close, NULL), "close");
         lv_obj_set_event_cb(close, chart_close_btn_cb);
+        /* 将具体信息页赋给关闭按钮 */
         close->user_data = btn_info;
     }
 }
@@ -119,7 +125,7 @@ static void add_thread_list(lv_obj_t *list)
     thread_usage_t data;
     rt_thread_t tid;
     rt_list_t *node;
-    list_btn_info_t *btn_info;
+    thread_btn_info_t *btn_info;
 
     for (node = info->object_list.next; node != &(info->object_list); node = node->next)
     {
@@ -127,8 +133,8 @@ static void add_thread_list(lv_obj_t *list)
         data = (thread_usage_t)tid->user_data;
         if (data != RT_NULL && data->magic == MAGIC_NUM)
         {
-            btn_info = rt_malloc(sizeof(list_btn_info_t));
-            rt_memset(btn_info, 0, sizeof(list_btn_info_t));
+            btn_info = rt_malloc(sizeof(thread_btn_info_t));
+            rt_memset(btn_info, 0, sizeof(thread_btn_info_t));
             btn_info->btn = lv_list_add_btn(list, NULL, tid->name);
             lv_btn_set_layout(btn_info->btn, LV_LAYOUT_PRETTY);
 
@@ -143,7 +149,7 @@ static void add_thread_list(lv_obj_t *list)
             lv_obj_set_event_cb(btn_info->btn, cpu_list_btn_cb);
             data->user_data          = btn_info;
             btn_info->btn->user_data = btn_info;
-            btn_info->user_data      = data;
+            btn_info->thread_info    = data;
         }
     }
 
