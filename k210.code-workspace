@@ -27,7 +27,8 @@
             "gpiohs.h": "c",
             "ulog.h": "c",
             "multi_button.h": "c",
-            "lv_kb.h": "c"
+            "lv_kb.h": "c",
+            "cmath": "cpp"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
         "files.exclude": {

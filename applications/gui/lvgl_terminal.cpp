@@ -1,40 +1,10 @@
 #include <lvgl.h>
+#include <rtdevice.h>
+#include <rtthread.h>
+#include "Semaphore.h"
 #include "lvgl_tools.h"
 
-#define LV_KB_CTRL_BTN_FLAGS (LV_BTNM_CTRL_NO_REPEAT | LV_BTNM_CTRL_CLICK_TRIG)
-
-static const char * kb_map_lc[] = {"1#", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", LV_SYMBOL_BACKSPACE, "\n",
-                                   "ABC", "a", "s", "d", "f", "g", "h", "j", "k", "l", LV_SYMBOL_NEW_LINE, "\n",
-                                   "_", "-", "z", "x", "c", "v", "b", "n", "m", ".", ",", ":", "\n",
-                                   LV_SYMBOL_CLOSE, LV_SYMBOL_LEFT, " ", LV_SYMBOL_RIGHT, LV_SYMBOL_OK, ""};
-
-static const lv_btnm_ctrl_t kb_ctrl_lc_map[] = {
-    LV_KB_CTRL_BTN_FLAGS | 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7,
-    LV_KB_CTRL_BTN_FLAGS | 6, 3, 3, 3, 3, 3, 3, 3, 3, 3, 7,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    LV_KB_CTRL_BTN_FLAGS | 2, 2, 6, 2, LV_KB_CTRL_BTN_FLAGS | 2};
-
-static const char * kb_map_uc[] = {"1#", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", LV_SYMBOL_BACKSPACE, "\n",
-                                   "abc", "A", "S", "D", "F", "G", "H", "J", "K", "L", LV_SYMBOL_NEW_LINE, "\n",
-                                   "_", "-", "Z", "X", "C", "V", "B", "N", "M", ".", ",", ":", "\n",
-                                   LV_SYMBOL_CLOSE, LV_SYMBOL_LEFT, " ", LV_SYMBOL_RIGHT, "Tab", ""};
-
-static const lv_btnm_ctrl_t kb_ctrl_uc_map[] = {
-    LV_KB_CTRL_BTN_FLAGS | 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7,
-    LV_KB_CTRL_BTN_FLAGS | 6, 3, 3, 3, 3, 3, 3, 3, 3, 3, 7,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    LV_KB_CTRL_BTN_FLAGS | 2, 2, 6, 2, LV_KB_CTRL_BTN_FLAGS | 2};
-
-static const char * kb_map_spec[] = {"0", "1", "2", "3", "4" ,"5", "6", "7", "8", "9", LV_SYMBOL_BACKSPACE, "\n",
-                                     "abc", "+", "-", "/", "*", "=", "%", "!", "?", "#", "<", ">", "\n",
-                                     "\\",  "@", "$", "(", ")", "{", "}", "[", "]", ";", "\"", "'", "\n",
-                                     LV_SYMBOL_CLOSE, LV_SYMBOL_LEFT, " ", LV_SYMBOL_RIGHT, "Tab", ""};
-
-static const lv_btnm_ctrl_t kb_ctrl_spec_map[] = {
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, LV_KB_CTRL_BTN_FLAGS | 2,
-    LV_KB_CTRL_BTN_FLAGS | 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-    LV_KB_CTRL_BTN_FLAGS | 2, 2, 6, 2, LV_KB_CTRL_BTN_FLAGS | 2};
+using namespace rtthread;
 
 class LvglTerminal
 {
@@ -56,7 +26,10 @@ class LvglTerminal
     lv_obj_t *ta;
     lv_obj_t *kb;
 
-    struct rt_serial_device serial;
+    struct rt_device serial;
+    struct rt_ringbuffer rx_buff;
+    Semaphore rx_count;
+    uint8_t buffer[16];
 
     /* 键盘主题设定 */
     void set_kb_style(lv_style_t *normal, lv_style_t *pressed, lv_style_t *released)
@@ -159,29 +132,47 @@ class LvglTerminal
         lv_anim_create(&anim_kb_out);
     }
     /* page 回调函数 */
-    void page_callback(lv_obj_t *page, lv_event_t event)
+    static void page_callback(lv_obj_t *page, lv_event_t event)
     {
+        LvglTerminal *self = (LvglTerminal *)page->user_data;
         if (event == LV_EVENT_DELETE)
         {
-            on_page_delete(page);
+            self->on_page_delete(page);
         }
     }
     /* page 被删除回调函数 */
     void on_page_delete(lv_obj_t *page) { delete this; }
     /* ta 回调函数 */
-    void ta_callback(lv_obj_t *ta, lv_event_t event) {}
-    /* kb 回调函数 */
-    void kb_callback(lv_obj_t *kb, lv_event_t event)
+    static void ta_callback(lv_obj_t *ta, lv_event_t event)
     {
+        LvglTerminal *self = (LvglTerminal *)ta->user_data;
+        if (event == LV_EVENT_CLICKED)
+        {
+            self->on_ta_clicked(ta);
+        }
+    }
+    /* ta 被按下回调函数 */
+    void on_ta_clicked(lv_obj_t *ta)
+    {
+        if (lv_obj_get_height(ta) < height * 3 / 4)
+        {
+            return;
+        }
+        create_edit_begin_anim(ta, kb);
+    }
+    /* kb 回调函数 */
+    static void kb_callback(lv_obj_t *kb, lv_event_t event)
+    {
+        LvglTerminal *self = (LvglTerminal *)kb->user_data;
         if (event == LV_EVENT_VALUE_CHANGED)
         {
-            on_kb_value_changed(kb);
+            self->on_kb_value_changed(kb);
         }
     }
     /* kb 值变化回调函数 */
     void on_kb_value_changed(lv_obj_t *kb)
     {
-        uint16_t btn_id  = lv_btnm_get_active_btn(kb);
+        uint16_t btn_id = lv_btnm_get_active_btn(kb);
         if (btn_id == LV_BTNM_BTN_NONE) return;
         if (lv_btnm_get_btn_ctrl(kb, btn_id, LV_BTNM_CTRL_HIDDEN | LV_BTNM_CTRL_INACTIVE)) return;
 
@@ -227,12 +218,38 @@ class LvglTerminal
         }
     }
     /* 输入字符 */
-    int put_char(struct rt_serial_device *serial, char c) { return 1; }
-    /* 输出字符 */
-    int get_char(void) { return -1; }
+    void put_char(char c) { write(&serial, 0, &c, 1); }
+    static rt_size_t write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
+    {
+        LvglTerminal *self = (LvglTerminal *)dev->user_data;
+
+        lv_ta_add_text(self->ta, (const char *)buffer);
+
+        return size;
+    }
+    /* 读出字符 */
+    char get_char(void)
+    {
+        char c;
+        read(&serial, 0, &c, 1);
+        return c;
+    }
+    static rt_size_t read(rt_device_t dev, rt_off_t pos, void *buffer, rt_size_t size)
+    {
+        uint8_t *buff      = (uint8_t *)buffer;
+        LvglTerminal *self = (LvglTerminal *)dev->user_data;
+
+        for (int i = 0; i < size; i++)
+        {
+            self->rx_count.wait();
+            rt_ringbuffer_getchar(&self->rx_buff, buff + i);
+        }
+
+        return size;
+    }
 
    public:
-    LvglTerminal(lv_obj_t *obj = NULL)
+    LvglTerminal(lv_obj_t *obj = NULL) : rx_count("s_v_tty0", 0)
     {
         interface = obj;
 
@@ -247,26 +264,37 @@ class LvglTerminal
         lv_obj_set_size(page, width, height);
         lv_obj_align(page, interface, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_event_cb(page, this->page_callback);
+        page->user_data = this;
         /* 创建 Text area */
         ta = lv_ta_create(page, NULL);
         lv_obj_set_size(ta, width, height / 2);
         lv_obj_align(ta, page, LV_ALIGN_IN_TOP_MID, 0, 0);
         lv_ta_set_text(ta, "");
         lv_obj_set_event_cb(ta, this->ta_callback);
+        ta->user_data = this;
         /* 创建键盘 */
         kb = lv_kb_create(page, NULL);
         lv_obj_set_size(kb, width, height / 2);
         lv_obj_align(kb, ta, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
         lv_obj_set_event_cb(kb, this->kb_callback);
+        kb->user_data = this;
         /* 设定键盘主题 */
         set_kb_style(&style_kb, &style_kb_pr, &style_kb_rel);
         lv_kb_set_style(kb, LV_KB_STYLE_BG, &style_kb);
         lv_kb_set_style(kb, LV_KB_STYLE_BTN_REL, &style_kb_rel);
         lv_kb_set_style(kb, LV_KB_STYLE_BTN_PR, &style_kb_pr);
-
+        /* 字符缓冲区 */
+        rt_ringbuffer_init(&rx_buff, buffer, 16);
+        /* 注册设备 */
+        serial.type      = RT_Device_Class_Char;
+        serial.read      = read;
+        serial.write     = write;
+        serial.user_data = this;
+        rt_device_register(&serial, "v_tty0", RT_DEVICE_FLAG_RDWR);
+        /* 开始动画 */
         create_edit_begin_anim(ta, kb);
     }
-    ~LvglTerminal(void) {}
+    ~LvglTerminal(void) { rt_device_unregister(&serial); }
 
     lv_obj_t *get_page(void) { return page; }
 };
