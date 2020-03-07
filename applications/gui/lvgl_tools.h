@@ -1,6 +1,10 @@
 #ifndef __LVGL_TOOLS_H__
 #define __LVGL_TOOLS_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <lvgl.h>
 
 extern const void *lvgl_obj_start_point;
@@ -47,5 +51,9 @@ lv_obj_t *lv_find_obj_parent_by_type(lv_obj_t *obj, char *name);
 int lv_add_activity_obj(lv_obj_t *obj);
 lv_obj_t *lv_remove_activity_obj(void);
 lv_obj_t *lv_get_activity_obj(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // __LVGL_TOOLS_H__

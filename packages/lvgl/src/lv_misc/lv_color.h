@@ -469,7 +469,7 @@ static inline uint8_t lv_color_brightness(lv_color_t color)
 #define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{b8 >> 6, g8 >> 5, r8 >> 5}})
 #elif LV_COLOR_DEPTH == 16
 #if LV_COLOR_16_SWAP == 0
-#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{b8 >> 3, g8 >> 2, r8 >> 3}})
+#define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{(uint16_t)(b8 >> 3), (uint16_t)(g8 >> 2), (uint16_t)(r8 >> 3)}})
 #else
 #define LV_COLOR_MAKE(r8, g8, b8) ((lv_color_t){{g8 >> 5, r8 >> 3, b8 >> 3, (g8 >> 2) & 0x7}})
 #endif
