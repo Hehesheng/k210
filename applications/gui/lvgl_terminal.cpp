@@ -1,14 +1,12 @@
+#include "Semaphore.h"
+#include "lvgl_tools.h"
 #include <lvgl.h>
 #include <rtdevice.h>
 #include <rtthread.h>
-#include "Semaphore.h"
-#include "lvgl_tools.h"
-
-using namespace rtthread;
 
 class LvglTerminal
 {
-   private:
+  private:
     lv_coord_t width;
     lv_coord_t height;
 
@@ -28,7 +26,7 @@ class LvglTerminal
 
     struct rt_device serial;
     struct rt_ringbuffer rx_buff;
-    Semaphore rx_count;
+    rtthread::Semaphore rx_count;
     uint8_t buffer[16];
 
     /* 键盘主题设定 */
@@ -168,16 +166,23 @@ class LvglTerminal
         {
             self->on_kb_value_changed(kb);
         }
+        else if (event == LV_EVENT_CANCEL)
+        {
+            self->create_edit_end_anim(self->ta, kb);
+        }
     }
     /* kb 值变化回调函数 */
     void on_kb_value_changed(lv_obj_t *kb)
     {
         uint16_t btn_id = lv_btnm_get_active_btn(kb);
-        if (btn_id == LV_BTNM_BTN_NONE) return;
-        if (lv_btnm_get_btn_ctrl(kb, btn_id, LV_BTNM_CTRL_HIDDEN | LV_BTNM_CTRL_INACTIVE)) return;
+        if (btn_id == LV_BTNM_BTN_NONE)
+            return;
+        if (lv_btnm_get_btn_ctrl(kb, btn_id, LV_BTNM_CTRL_HIDDEN | LV_BTNM_CTRL_INACTIVE))
+            return;
 
         const char *txt = lv_btnm_get_active_btn_text(kb);
-        if (txt == NULL) return;
+        if (txt == NULL)
+            return;
 
         /*Do the corresponding action according to the text of the button*/
         if (strcmp(txt, "abc") == 0)
@@ -200,25 +205,50 @@ class LvglTerminal
         }
         else if (strcmp(txt, LV_SYMBOL_CLOSE) == 0)
         {
-            create_edit_end_anim(ta, kb);
+            lv_event_send(kb, LV_EVENT_CANCEL, NULL);
             return;
         }
-
-        if (strcmp(txt, "Enter") == 0 || strcmp(txt, LV_SYMBOL_NEW_LINE) == 0)
-            lv_ta_add_char(ta, '\n');
+        else if (strcmp(txt, "Tab") == 0)
+        {
+            send('\t');
+        }
+        else if (strcmp(txt, "Enter") == 0 || strcmp(txt, LV_SYMBOL_NEW_LINE) == 0)
+        {
+            send('\n');
+        }
         else if (strcmp(txt, LV_SYMBOL_LEFT) == 0)
+        {
+            send(0x1b);
+            send(0x5b);
+            send(0x44);
             lv_ta_cursor_left(ta);
+        }
         else if (strcmp(txt, LV_SYMBOL_RIGHT) == 0)
+        {
+            send(0x1b);
+            send(0x5b);
+            send(0x43);
             lv_ta_cursor_right(ta);
+        }
         else if (strcmp(txt, LV_SYMBOL_BACKSPACE) == 0)
-            lv_ta_del_char(ta);
+        {
+            send('\b');
+        }
         else
         {
-            lv_ta_add_text(ta, txt);
+            send(txt[0]);
         }
     }
     /* 输入字符 */
-    void put_char(char c) { write(&serial, 0, &c, 1); }
+    void put_char(char c)
+    {
+        if (c == '\b')
+        {
+            lv_ta_del_char(ta);
+            return;
+        }
+        write(&serial, 0, &c, 1);
+    }
     static rt_size_t write(rt_device_t dev, rt_off_t pos, const void *buffer, rt_size_t size)
     {
         LvglTerminal *self = (LvglTerminal *)dev->user_data;
@@ -247,8 +277,16 @@ class LvglTerminal
 
         return size;
     }
+    /* 发送字符到缓冲 */
+    int send(uint8_t c)
+    {
+        if (rt_ringbuffer_putchar(&rx_buff, c) == 0)
+            return -1;
+        rx_count.release();
+        return 0;
+    }
 
-   public:
+  public:
     LvglTerminal(lv_obj_t *obj = NULL) : rx_count("s_v_tty0", 0)
     {
         interface = obj;
@@ -291,10 +329,15 @@ class LvglTerminal
         serial.write     = write;
         serial.user_data = this;
         rt_device_register(&serial, "v_tty0", RT_DEVICE_FLAG_RDWR);
+        rt_console_set_device("v_tty0");
         /* 开始动画 */
         create_edit_begin_anim(ta, kb);
     }
-    ~LvglTerminal(void) { rt_device_unregister(&serial); }
+    ~LvglTerminal(void)
+    {
+        rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
+        rt_device_unregister(&serial); 
+    }
 
     lv_obj_t *get_page(void) { return page; }
 };

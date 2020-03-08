@@ -2,10 +2,6 @@
     "folders": [
         {
             "path": "./"
-        },
-        {
-            "name": "k210 @ a95e999",
-            "uri": "gitlens://a95e999/c:/Users/hhslz/OneDrive/Desktop/workSpace/k210?{\"path\":\"/c:/Users/hhslz/OneDrive/Desktop/workSpace/k210\",\"ref\":\"a95e9997098c8f7ebdd922e39b50dc324b440a61\",\"repoPath\":\"c:/Users/hhslz/OneDrive/Desktop/workSpace/k210\"}"
         }
     ],
     "settings": {
