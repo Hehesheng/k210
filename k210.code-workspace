@@ -24,7 +24,13 @@
             "ulog.h": "c",
             "multi_button.h": "c",
             "lv_kb.h": "c",
-            "cmath": "cpp"
+            "cmath": "cpp",
+            "thread_pool.h": "c",
+            "drv_tft.h": "c",
+            "rtthread.h": "c",
+            "rthw.h": "c",
+            "sysctl.h": "c",
+            "uarths.h": "c"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
         "files.exclude": {

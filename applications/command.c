@@ -276,7 +276,7 @@ const char pin_func_name[][15] = {
     "DEBUG31       ", /*!< Debug function 31 */
 };
 
-static void get_pin_config(int argc, char** argv)
+static void get_pin_config(int argc, char **argv)
 {
     fpioa_io_config_t config;
 
@@ -292,53 +292,56 @@ static void get_pin_config(int argc, char** argv)
 }
 MSH_CMD_EXPORT(get_pin_config, get pin config);
 
-static void change_tft(int argc, char** argv)
+static void change_tft(int argc, char **argv)
 {
     static uint32_t index = 0;
     uint16_t color        = WHITE;
-    struct rt_device_graphic_info* info;
+    struct rt_device_graphic_info *info;
     rt_device_t dev = rt_device_find("tft");
-    uint32_t* ptr;
+    uint32_t *ptr;
     uint32_t len = 1;
 
-    info = (struct rt_device_graphic_info*)dev->user_data;
-    ptr  = (uint32_t*)info->framebuffer;
+    info = (struct rt_device_graphic_info *)dev->user_data;
+    ptr  = (uint32_t *)info->framebuffer;
 
-    if (argc > 1) color = atoi(argv[1]);
-    if (argc > 2) len = atoi(argv[2]);
+    if (argc > 1)
+        color = atoi(argv[1]);
+    if (argc > 2)
+        len = atoi(argv[2]);
 
     while (len--)
     {
         ptr[index] = color;
         ptr[index] |= (~color) << 16;
         index++;
-        if (index >= 240 * 320) index = 0;
+        if (index >= 240 * 320)
+            index = 0;
     }
 }
 MSH_CMD_EXPORT(change_tft, NONE);
 
-static void task(void* arg)
+static void task(void *arg)
 {
     LOG_I("The task on thread %.*s is running.", RT_NAME_MAX, rt_thread_self()->name);
     rt_thread_delay(rt_tick_from_millisecond((uint32_t)arg));
     LOG_I("The task on thread %.*s will finish.", RT_NAME_MAX, rt_thread_self()->name);
 }
 
-static void thread_pool_sample(uint8_t argc, char** argv)
+static void thread_pool_sample(uint8_t argc, char **argv)
 {
     thread_pool pool;
 
     init_thread_pool(&pool, "sam", 3, 2048);
     /* add 5 task to thread pool */
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
-    pool.add_task(&pool, task, (void*)(rand() % 5000));
+    pool.add_task(&pool, task, (void *)(rand() % 5000));
+    pool.add_task(&pool, task, (void *)(rand() % 5000));
+    pool.add_task(&pool, task, (void *)(rand() % 5000));
+    pool.add_task(&pool, task, (void *)(rand() % 5000));
+    pool.add_task(&pool, task, (void *)(rand() % 5000));
+    pool.add_task(&pool, task, (void *)(rand() % 5000));
+    pool.add_task(&pool, task, (void *)(rand() % 5000));
+    pool.add_task(&pool, task, (void *)(rand() % 5000));
+    pool.add_task(&pool, task, (void *)(rand() % 5000));
     /* wait 10S */
     rt_thread_delay(rt_tick_from_millisecond(10 * 1000));
     /* delete all task */
@@ -348,3 +351,66 @@ static void thread_pool_sample(uint8_t argc, char** argv)
     pool.destroy(&pool);
 }
 MSH_CMD_EXPORT(thread_pool_sample, Run thread pool sample);
+
+static rt_mailbox_t m_buff = RT_NULL;
+
+static int on_uart_recv(void *ctx)
+{
+    char v_buf[8];
+
+    rt_interrupt_enter();
+    int ret = uart_receive_data(UART_DEVICE_1, v_buf, 8);
+
+    for (uint32_t i = 0; i < ret; i++)
+    {
+        rt_mb_send(m_buff, v_buf[i]);
+    }
+    rt_interrupt_leave();
+
+    return 0;
+}
+
+static void test_thread(void *param)
+{
+    rt_ubase_t ch = 0;
+
+    while (1)
+    {
+        rt_mb_recv(m_buff, &ch, RT_WAITING_FOREVER);
+        rt_kprintf("recv value:[0X%x],ch:[%c]\n", ch, ch);
+    }
+}
+
+static void send(int argc, char **argv)
+{
+    if (argc < 2)
+        return;
+    uart_send_data(UART_DEVICE_1, argv[1], rt_strlen(argv[1]));
+}
+MSH_CMD_EXPORT(send, send uart);
+
+static int uart_hw_init(void)
+{
+    rt_thread_t tid;
+
+    m_buff = rt_mb_create("uart_test", 16, RT_IPC_FLAG_FIFO);
+
+    tid = rt_thread_create("uart_th", test_thread, NULL, 4096, 20, 20);
+    if (tid)
+    {
+        rt_thread_startup(tid);
+    }
+
+    fpioa_set_function(18, FUNC_UART1_TX);
+    fpioa_set_function(19, FUNC_UART1_RX);
+
+    uart_init(UART_DEVICE_1);
+
+    uart_configure(UART_DEVICE_1, 115200, 8, UART_STOP_1, UART_PARITY_NONE);
+
+    uart_set_receive_trigger(UART_DEVICE_1, UART_RECEIVE_FIFO_8);
+    uart_irq_register(UART_DEVICE_1, UART_RECEIVE, on_uart_recv, NULL, 2);
+
+    return 0;
+}
+INIT_BOARD_EXPORT(uart_hw_init);

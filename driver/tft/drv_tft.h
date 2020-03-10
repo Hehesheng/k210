@@ -1,6 +1,10 @@
 #ifndef DRV_TFT_H__
 #define DRV_TFT_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* clang-format off */
 #define NO_OPERATION            0x00
 #define SOFTWARE_RESET          0x01
@@ -125,5 +129,9 @@ void tft_draw_rectangle(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
 void tft_draw_picture(uint16_t x1, uint16_t y1, uint16_t width, uint16_t height, uint16_t *ptr);
 void tft_flush(void);
 uint32_t *tft_get_frambuffer(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
