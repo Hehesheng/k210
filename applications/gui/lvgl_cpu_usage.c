@@ -1,6 +1,6 @@
-#include <lvgl.h>
 #include "cpu_usage.h"
 #include "lvgl_tools.h"
+#include <lvgl.h>
 
 #define LOG_TAG "lv.cpu"
 #include <ulog.h>
@@ -16,8 +16,6 @@ typedef struct thread_btn_info
     void *thread_info;
 } thread_btn_info_t;
 
-static lv_task_t *task;
-
 /* 定时刷新 */
 static void refresh_cpu_task(lv_task_t *task)
 {
@@ -29,14 +27,15 @@ static void refresh_cpu_task(lv_task_t *task)
 
     for (node = info->object_list.next; node != &(info->object_list); node = node->next)
     {
-        tid  = rt_list_entry(node, struct rt_thread, list);
+        tid = rt_list_entry(node, struct rt_thread, list);
         /* 获取线程信息 */
         data = (thread_usage_t)tid->user_data;
         if (data != RT_NULL && data->magic == MAGIC_NUM)
         {
             /* 获取线程按键结构体 */
             btn_info = (thread_btn_info_t *)data->user_data;
-            if (btn_info == NULL) continue;
+            if (btn_info == NULL)
+                continue;
 
             lv_bar_set_value(btn_info->bar[0], data->major[0], true);
             lv_bar_set_value(btn_info->bar[1], data->major[1], true);
@@ -85,7 +84,7 @@ static void cpu_list_btn_cb(lv_obj_t *btn, lv_event_t event)
         /* 获取线程按键结构体 */
         thread_btn_info_t *btn_info = (thread_btn_info_t *)btn->user_data;
         /* 获取线程信息结构体 */
-        thread_usage_t data         = (thread_usage_t)btn_info->thread_info;
+        thread_usage_t data = (thread_usage_t)btn_info->thread_info;
 
         lv_obj_t *page = lv_find_obj_parent_by_type(btn, "lv_page");
         lv_obj_t *cont = lv_cont_create(page, NULL);
@@ -153,7 +152,8 @@ static void add_thread_list(lv_obj_t *list)
         }
     }
 
-    task = lv_task_create(refresh_cpu_task, 1000, LV_TASK_PRIO_MID, NULL);
+    lv_task_t *task = lv_task_create(refresh_cpu_task, 1000, LV_TASK_PRIO_MID, NULL);
+    list->user_data = task;
 }
 
 static void close_press_cb(lv_obj_t *btn, lv_event_t event)
@@ -165,7 +165,8 @@ static void close_press_cb(lv_obj_t *btn, lv_event_t event)
     }
     else if (event == LV_EVENT_DELETE)
     {
-        lv_task_del(task);
+        lv_obj_t *list = lv_find_obj_parent_by_type(btn, "lv_list");
+        lv_task_del((lv_task_t *)list->user_data);
     }
 }
 
