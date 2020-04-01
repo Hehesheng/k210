@@ -34,6 +34,6 @@ if rtconfig.CROSS_TOOL == 'gcc':
 elif rtconfig.CROSS_TOOL == 'keil':
     LOCAL_CCFLAGS += ' --c99 --gnu -g -W'
 
-group = DefineGroup('LittlevGL2RTT', src, depend = ['PKG_USING_LITTLEVGL2RTT'], CPPPATH = inc, LOCAL_CCFLAGS = LOCAL_CCFLAGS)
+group = DefineGroup('LittlevGL2RTT', src, depend = [], CPPPATH = inc, LOCAL_CCFLAGS = LOCAL_CCFLAGS)
 
 Return('group')

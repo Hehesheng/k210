@@ -17,6 +17,14 @@
 
 #define IOCONFIG(pin,func)  {pin, func, #func}
 
+#define R_LED (6)
+#define G_LED (5)
+#define B_LED (4)
+
+#define KEY0_PIN (0)
+#define KEY1_PIN (1)
+#define KEY2_PIN (2)
+
 static struct io_config
 {
     int io_num;
@@ -24,6 +32,17 @@ static struct io_config
     const char * func_name;
 } io_config[] = 
 {
+    IOCONFIG(6, FUNC_UART1_RX),
+    IOCONFIG(7, FUNC_UART1_TX),
+    IOCONFIG(8, FUNC_GPIOHS2),
+
+    IOCONFIG(12, FUNC_GPIO0 + B_LED),
+    IOCONFIG(13, FUNC_GPIO0 + G_LED),
+    IOCONFIG(14, FUNC_GPIO0 + R_LED),
+
+    IOCONFIG(15, FUNC_GPIO0 + KEY1_PIN),
+    IOCONFIG(16, FUNC_GPIO0 + KEY0_PIN),
+    IOCONFIG(17, FUNC_GPIO0 + KEY2_PIN),
 #ifdef BSP_USING_LCD
     IOCONFIG(BSP_LCD_CS_PIN, FUNC_SPI0_SS0),                 /* LCD CS PIN */
     IOCONFIG(BSP_LCD_WR_PIN, FUNC_SPI0_SCLK),                /* LCD WR PIN */
@@ -86,6 +105,11 @@ int io_config_init(void)
     int count = sizeof(io_config) / sizeof(io_config[0]);
     int i;
     
+    sysctl_set_power_mode(SYSCTL_POWER_BANK1, SYSCTL_POWER_V33);
+    sysctl_set_power_mode(SYSCTL_POWER_BANK2, SYSCTL_POWER_V33);
+    sysctl_set_power_mode(SYSCTL_POWER_BANK3, SYSCTL_POWER_V33);
+    sysctl_set_power_mode(SYSCTL_POWER_BANK4, SYSCTL_POWER_V33);
+    sysctl_set_power_mode(SYSCTL_POWER_BANK5, SYSCTL_POWER_V33);
     sysctl_set_power_mode(SYSCTL_POWER_BANK6, SYSCTL_POWER_V18);
     sysctl_set_power_mode(SYSCTL_POWER_BANK7, SYSCTL_POWER_V18);
 

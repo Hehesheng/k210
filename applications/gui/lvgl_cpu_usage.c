@@ -132,7 +132,7 @@ static void add_thread_list(lv_obj_t *list)
         data = (thread_usage_t)tid->user_data;
         if (data != RT_NULL && data->magic == MAGIC_NUM)
         {
-            btn_info = rt_malloc(sizeof(thread_btn_info_t));
+            btn_info = (thread_btn_info_t *)rt_malloc(sizeof(thread_btn_info_t));
             rt_memset(btn_info, 0, sizeof(thread_btn_info_t));
             btn_info->btn = lv_list_add_btn(list, NULL, tid->name);
             lv_btn_set_layout(btn_info->btn, LV_LAYOUT_PRETTY);

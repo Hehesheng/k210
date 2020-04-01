@@ -3,6 +3,45 @@
 #include <lvgl.h>
 #include <rtdevice.h>
 #include <rtthread.h>
+extern "C" {
+    #include "msh.h"
+    #include "shell.h"
+}
+
+#define LV_KB_CTRL_BTN_FLAGS (LV_BTNM_CTRL_NO_REPEAT | LV_BTNM_CTRL_CLICK_TRIG)
+
+static const char * kb_map_lc[] = {"1#", "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", LV_SYMBOL_BACKSPACE, "\n",
+                                   "ABC", "a", "s", "d", "f", "g", "h", "j", "k", "l", LV_SYMBOL_NEW_LINE, "\n",
+                                   "_", "-", "z", "x", "c", "v", "b", "n", "m", ".", ",", ":", "\n",
+                                   LV_SYMBOL_CLOSE, LV_SYMBOL_LEFT, LV_SYMBOL_UP, " ", LV_SYMBOL_DOWN, LV_SYMBOL_RIGHT, "Tab", ""};
+
+static const lv_btnm_ctrl_t kb_ctrl_lc_map[] = {
+    LV_KB_CTRL_BTN_FLAGS | 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7,
+    LV_KB_CTRL_BTN_FLAGS | 6, 3, 3, 3, 3, 3, 3, 3, 3, 3, 7,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    LV_KB_CTRL_BTN_FLAGS | 2, 2, 2, 6, 2, 2, LV_KB_CTRL_BTN_FLAGS | 2};
+
+static const char * kb_map_uc[] = {"1#", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", LV_SYMBOL_BACKSPACE, "\n",
+                                   "abc", "A", "S", "D", "F", "G", "H", "J", "K", "L", LV_SYMBOL_NEW_LINE, "\n",
+                                   "_", "-", "Z", "X", "C", "V", "B", "N", "M", ".", ",", ":", "\n",
+                                   LV_SYMBOL_CLOSE, LV_SYMBOL_LEFT, LV_SYMBOL_UP, " ", LV_SYMBOL_DOWN, LV_SYMBOL_RIGHT, "Tab", ""};
+
+static const lv_btnm_ctrl_t kb_ctrl_uc_map[] = {
+    LV_KB_CTRL_BTN_FLAGS | 5, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 7,
+    LV_KB_CTRL_BTN_FLAGS | 6, 3, 3, 3, 3, 3, 3, 3, 3, 3, 7,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    LV_KB_CTRL_BTN_FLAGS | 2, 2, 2, 6, 2, 2, LV_KB_CTRL_BTN_FLAGS | 2};
+
+static const char * kb_map_spec[] = {"0", "1", "2", "3", "4" ,"5", "6", "7", "8", "9", LV_SYMBOL_BACKSPACE, "\n",
+                                     "abc", "+", "-", "/", "*", "=", "%", "!", "?", "#", "<", ">", "\n",
+                                     "\\",  "@", "$", "(", ")", "{", "}", "[", "]", ";", "\"", "'", "\n",
+                                     LV_SYMBOL_CLOSE, LV_SYMBOL_LEFT, LV_SYMBOL_UP, " ", LV_SYMBOL_DOWN, LV_SYMBOL_RIGHT, "Tab", ""};
+
+static const lv_btnm_ctrl_t kb_ctrl_spec_map[] = {
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, LV_KB_CTRL_BTN_FLAGS | 2,
+    LV_KB_CTRL_BTN_FLAGS | 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    LV_KB_CTRL_BTN_FLAGS | 2, 2, 2, 6, 2, 2, LV_KB_CTRL_BTN_FLAGS | 2};
 
 class LvglTerminal
 {
@@ -27,7 +66,7 @@ class LvglTerminal
     struct rt_device serial;
     struct rt_ringbuffer rx_buff;
     rtthread::Semaphore rx_count;
-    uint8_t buffer[16];
+    uint8_t buffer[64];
 
     /* 键盘主题设定 */
     void set_kb_style(lv_style_t *normal, lv_style_t *pressed, lv_style_t *released)
@@ -72,7 +111,7 @@ class LvglTerminal
     {
         anim_ta_in.var            = ta;
         anim_ta_in.start          = height;
-        anim_ta_in.end            = height - lv_obj_get_y(kb);
+        anim_ta_in.end            = height - lv_obj_get_height(kb);
         anim_ta_in.exec_cb        = (lv_anim_exec_xcb_t)lv_obj_set_height;
         anim_ta_in.path_cb        = lv_anim_path_linear;
         anim_ta_in.ready_cb       = NULL;
@@ -85,8 +124,8 @@ class LvglTerminal
         lv_anim_create(&anim_ta_in);
 
         anim_kb_in.var            = kb;
-        anim_kb_in.start          = LV_VER_RES;
-        anim_kb_in.end            = lv_obj_get_y(kb);
+        anim_kb_in.start          = height;
+        anim_kb_in.end            = height - lv_obj_get_height(kb);
         anim_kb_in.exec_cb        = (lv_anim_exec_xcb_t)lv_obj_set_y;
         anim_kb_in.path_cb        = lv_anim_path_linear;
         anim_kb_in.ready_cb       = NULL;
@@ -102,7 +141,7 @@ class LvglTerminal
     void create_edit_end_anim(lv_obj_t *ta, lv_obj_t *kb)
     {
         anim_ta_out.var            = ta;
-        anim_ta_out.start          = height - lv_obj_get_y(kb);
+        anim_ta_out.start          = height - lv_obj_get_height(kb);
         anim_ta_out.end            = height;
         anim_ta_out.exec_cb        = (lv_anim_exec_xcb_t)lv_obj_set_height;
         anim_ta_out.path_cb        = lv_anim_path_linear;
@@ -116,8 +155,8 @@ class LvglTerminal
         lv_anim_create(&anim_ta_out);
 
         anim_kb_out.var            = kb;
-        anim_kb_out.start          = LV_VER_RES;
-        anim_kb_out.end            = lv_obj_get_y(kb);
+        anim_kb_out.start          = height - lv_obj_get_height(kb);
+        anim_kb_out.end            = height;
         anim_kb_out.exec_cb        = (lv_anim_exec_xcb_t)lv_obj_set_y;
         anim_kb_out.path_cb        = lv_anim_path_linear;
         anim_kb_out.ready_cb       = NULL;
@@ -230,6 +269,18 @@ class LvglTerminal
             send(0x43);
             lv_ta_cursor_right(ta);
         }
+        else if (strcmp(txt, LV_SYMBOL_UP) == 0)
+        {
+            send(0x1b);
+            send(0x5b);
+            send(0x41);
+        }
+        else if (strcmp(txt, LV_SYMBOL_DOWN) == 0)
+        {
+            send(0x1b);
+            send(0x5b);
+            send(0x42);
+        }
         else if (strcmp(txt, LV_SYMBOL_BACKSPACE) == 0)
         {
             send('\b');
@@ -242,7 +293,7 @@ class LvglTerminal
     /* 输入字符 */
     void put_char(char c)
     {
-        if (c == '\b')
+        if (c == 0x7F || c == 0x08)
         {
             lv_ta_del_char(ta);
             return;
@@ -283,6 +334,7 @@ class LvglTerminal
         if (rt_ringbuffer_putchar(&rx_buff, c) == 0)
             return -1;
         rx_count.release();
+        serial.rx_indicate(&serial, 1);
         return 0;
     }
 
@@ -298,7 +350,6 @@ class LvglTerminal
         page = lv_page_create(interface, NULL);
         lv_page_set_style(page, LV_LIST_STYLE_BG, &lv_style_transp_fit);
         lv_page_set_sb_mode(page, LV_SB_MODE_DRAG);
-
         lv_obj_set_size(page, width, height);
         lv_obj_align(page, interface, LV_ALIGN_CENTER, 0, 0);
         lv_obj_set_event_cb(page, this->page_callback);
@@ -308,6 +359,8 @@ class LvglTerminal
         lv_obj_set_size(ta, width, height / 2);
         lv_obj_align(ta, page, LV_ALIGN_IN_TOP_MID, 0, 0);
         lv_ta_set_text(ta, "");
+        lv_ta_set_cursor_click_pos(ta, false);
+        lv_ta_set_cursor_type(ta, LV_CURSOR_BLOCK);
         lv_obj_set_event_cb(ta, this->ta_callback);
         ta->user_data = this;
         /* 创建键盘 */
@@ -315,6 +368,8 @@ class LvglTerminal
         lv_obj_set_size(kb, width, height / 2);
         lv_obj_align(kb, ta, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
         lv_obj_set_event_cb(kb, this->kb_callback);
+        lv_btnm_set_map(kb, kb_map_lc);
+        lv_btnm_set_ctrl_map(kb, kb_ctrl_lc_map);
         kb->user_data = this;
         /* 设定键盘主题 */
         set_kb_style(&style_kb, &style_kb_pr, &style_kb_rel);
@@ -322,20 +377,23 @@ class LvglTerminal
         lv_kb_set_style(kb, LV_KB_STYLE_BTN_REL, &style_kb_rel);
         lv_kb_set_style(kb, LV_KB_STYLE_BTN_PR, &style_kb_pr);
         /* 字符缓冲区 */
-        rt_ringbuffer_init(&rx_buff, buffer, 16);
+        rt_ringbuffer_init(&rx_buff, buffer, 64);
         /* 注册设备 */
+        memset(&serial, 0, sizeof(struct rt_device));
         serial.type      = RT_Device_Class_Char;
         serial.read      = read;
         serial.write     = write;
         serial.user_data = this;
-        rt_device_register(&serial, "v_tty0", RT_DEVICE_FLAG_RDWR);
+        rt_device_register(&serial, "v_tty0", RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_INT_RX);
         rt_console_set_device("v_tty0");
+        finsh_set_device("v_tty0");
         /* 开始动画 */
         create_edit_begin_anim(ta, kb);
     }
     ~LvglTerminal(void)
     {
         rt_console_set_device(RT_CONSOLE_DEVICE_NAME);
+        finsh_set_device(RT_CONSOLE_DEVICE_NAME);
         rt_device_unregister(&serial); 
     }
 

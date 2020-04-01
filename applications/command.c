@@ -304,18 +304,15 @@ static void change_tft(int argc, char **argv)
     info = (struct rt_device_graphic_info *)dev->user_data;
     ptr  = (uint32_t *)info->framebuffer;
 
-    if (argc > 1)
-        color = atoi(argv[1]);
-    if (argc > 2)
-        len = atoi(argv[2]);
+    if (argc > 1) color = atoi(argv[1]);
+    if (argc > 2) len = atoi(argv[2]);
 
     while (len--)
     {
         ptr[index] = color;
         ptr[index] |= (~color) << 16;
         index++;
-        if (index >= 240 * 320)
-            index = 0;
+        if (index >= 240 * 320) index = 0;
     }
 }
 MSH_CMD_EXPORT(change_tft, NONE);
@@ -358,14 +355,12 @@ static int on_uart_recv(void *ctx)
 {
     char v_buf[8];
 
-    rt_interrupt_enter();
     int ret = uart_receive_data(UART_DEVICE_1, v_buf, 8);
 
     for (uint32_t i = 0; i < ret; i++)
     {
         rt_mb_send(m_buff, v_buf[i]);
     }
-    rt_interrupt_leave();
 
     return 0;
 }
@@ -377,15 +372,15 @@ static void test_thread(void *param)
     while (1)
     {
         rt_mb_recv(m_buff, &ch, RT_WAITING_FOREVER);
-        rt_kprintf("recv value:[0X%x],ch:[%c]\n", ch, ch);
+        // rt_kprintf("recv value:[0X%x],ch:[%c]\r\n", ch, ch);
     }
 }
 
 static void send(int argc, char **argv)
 {
-    if (argc < 2)
-        return;
+    if (argc < 2) return;
     uart_send_data(UART_DEVICE_1, argv[1], rt_strlen(argv[1]));
+    uart_send_data(UART_DEVICE_1, "\r\n", 2);
 }
 MSH_CMD_EXPORT(send, send uart);
 
@@ -401,9 +396,6 @@ static int uart_hw_init(void)
         rt_thread_startup(tid);
     }
 
-    fpioa_set_function(18, FUNC_UART1_TX);
-    fpioa_set_function(19, FUNC_UART1_RX);
-
     uart_init(UART_DEVICE_1);
 
     uart_configure(UART_DEVICE_1, 115200, 8, UART_STOP_1, UART_PARITY_NONE);
@@ -411,6 +403,13 @@ static int uart_hw_init(void)
     uart_set_receive_trigger(UART_DEVICE_1, UART_RECEIVE_FIFO_8);
     uart_irq_register(UART_DEVICE_1, UART_RECEIVE, on_uart_recv, NULL, 2);
 
+    gpiohs_set_drive_mode(2, GPIO_DM_OUTPUT);
+    gpiohs_set_pin(2, GPIO_PV_LOW);
+    rt_thread_delay(10);
+    gpiohs_set_pin(2, GPIO_PV_HIGH);
+    rt_thread_delay(100);
+    uart_send_data(UART_DEVICE_1, "ATE0\r\n", 6);
+
     return 0;
 }
-INIT_BOARD_EXPORT(uart_hw_init);
+INIT_APP_EXPORT(uart_hw_init);

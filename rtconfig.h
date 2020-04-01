@@ -95,7 +95,6 @@
 /* POSIX layer and C standard library */
 
 #define RT_USING_LIBC
-#define RT_USING_POSIX
 
 /* Network */
 
@@ -169,19 +168,6 @@
 
 /* system packages */
 
-#define PKG_USING_LITTLEVGL2RTT
-#define PKG_USING_LITTLEVGL2RTT_LATEST_VERSION
-
-/* LittlevGL2RTT Options */
-
-#define LV_MEM_DYNAMIC
-#define LV_MEM_CUSTOM 1
-#define LV_COLOR_DEPTH_16
-#define LV_COLOR_DEPTH 16
-#define LV_HOR_RES 320
-#define LV_VER_RES 240
-#define LV_DPI 50
-#define LITTLEVGL2RTT_USING_DEMO
 #define PKG_USING_THREAD_POOL
 #define PKG_USING_THREAD_POOL_V401
 
@@ -210,6 +196,15 @@
 
 #define BOARD_K210_EVB
 #define BSP_USING_UART_HS
+#define BSP_USING_CAMERA
+#define BSP_CAMERA_SCCB_SDA_PIN 40
+#define BSP_CAMERA_SCCB_SCLK_PIN 41
+#define BSP_CAMERA_CMOS_RST_PIN 42
+#define BSP_CAMERA_CMOS_VSYNC_PIN 43
+#define BSP_CAMERA_CMOS_PWDN_PIN 44
+#define BSP_CAMERA_CMOS_XCLK_PIN 46
+#define BSP_CAMERA_CMOS_PCLK_PIN 47
+#define BSP_CAMERA_CMOS_HREF_PIN 45
 #define __STACKSIZE__ 4096
 
 #endif

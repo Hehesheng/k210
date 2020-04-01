@@ -5,11 +5,6 @@
   "name": "CJSON"
  }, 
  {
-  "path": "/packages/system/LittlevGL2RTT", 
-  "ver": "latest", 
-  "name": "LITTLEVGL2RTT"
- }, 
- {
   "path": "/packages/system/thread_pool", 
   "ver": "v4.0.1", 
   "name": "THREAD_POOL"

@@ -27,11 +27,8 @@ int main(void)
     gpio_init();
 
     gpio_set_drive_mode(R_LED, GPIO_DM_OUTPUT);
-    fpioa_set_function(14, FUNC_GPIO0 + R_LED);
     gpio_set_drive_mode(G_LED, GPIO_DM_OUTPUT);
-    fpioa_set_function(13, FUNC_GPIO0 + G_LED);
     gpio_set_drive_mode(B_LED, GPIO_DM_OUTPUT);
-    fpioa_set_function(12, FUNC_GPIO0 + B_LED);
 
     while (1)
     {

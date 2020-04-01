@@ -57,11 +57,8 @@ static int key_init(void)
     gpio_init();
 
     gpio_set_drive_mode(KEY0_PIN, GPIO_DM_INPUT);
-    fpioa_set_function(16, FUNC_GPIO0 + KEY0_PIN);
     gpio_set_drive_mode(KEY1_PIN, GPIO_DM_INPUT);
-    fpioa_set_function(15, FUNC_GPIO0 + KEY1_PIN);
     gpio_set_drive_mode(KEY2_PIN, GPIO_DM_INPUT);
-    fpioa_set_function(17, FUNC_GPIO0 + KEY2_PIN);
 
     tid = rt_thread_create("key", key_thread, RT_NULL, 4096, 10, 20);
     if (tid)

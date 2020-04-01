@@ -30,7 +30,8 @@
             "rtthread.h": "c",
             "rthw.h": "c",
             "sysctl.h": "c",
-            "uarths.h": "c"
+            "uarths.h": "c",
+            "lvgl_tools.h": "c"
         },
         "terminal.integrated.shell.windows": "C:\\windows\\System32\\wsl.exe",
         "files.exclude": {
